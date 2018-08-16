@@ -1,5 +1,7 @@
 package homecontroller.domain;
 
+import java.time.LocalDateTime;
+
 public class ModelDAO {
 
 	private static ModelDAO instance;
@@ -28,6 +30,10 @@ public class ModelDAO {
 	}
 
 	public HouseModel read() {
-		return houseModel;
+		if (LocalDateTime.now().minusMinutes(3).isAfter(houseModel.getDateTime())) {
+			return null; // Too old. Should never happen
+		} else {
+			return houseModel;
+		}
 	}
 }
