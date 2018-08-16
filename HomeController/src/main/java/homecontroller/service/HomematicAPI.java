@@ -1,28 +1,38 @@
-package homecontroller;
+package homecontroller.service;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.PostConstruct;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+@Component
 public class HomematicAPI {
+
+	@Autowired
+	private Environment env;
 
 	private String host;
 	private List<String> hmDevicePrefixes;
@@ -30,9 +40,10 @@ public class HomematicAPI {
 	private Map<String, String> currentValues;
 	private Map<String, String> currentStateIDs;
 
-	public HomematicAPI(String host, List<String> hmDevicePrefixes) {
-		this.host = host;
-		this.hmDevicePrefixes = hmDevicePrefixes;
+	@PostConstruct
+	public void init() {
+		host = env.getProperty("homematic.hostName");
+		hmDevicePrefixes = new ArrayList<String>(Arrays.asList(env.getProperty("homematic.devicePrefixes").split(",")));
 	}
 
 	public String getAsString(String key) {

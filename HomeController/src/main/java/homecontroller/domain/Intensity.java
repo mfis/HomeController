@@ -1,4 +1,4 @@
-package domain;
+package homecontroller.domain;
 
 public enum Intensity {
 
