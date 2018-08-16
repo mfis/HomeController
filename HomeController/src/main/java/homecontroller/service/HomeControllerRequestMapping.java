@@ -5,8 +5,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import homecontroller.domain.ActionModel;
 import homecontroller.domain.HouseModel;
 import homecontroller.domain.HouseService;
+import homecontroller.domain.ModelDAO;
 
 @RestController
 public class HomeControllerRequestMapping {
@@ -15,14 +17,14 @@ public class HomeControllerRequestMapping {
 	private HouseService houseService;
 
 	@GetMapping("/toggle")
-	public HouseModel toggle(@RequestParam("key") String key) throws Exception {
+	public ActionModel toggle(@RequestParam("key") String key) throws Exception {
 		houseService.toggle(key);
-		return houseService.getHouse();
+		return new ActionModel();
 	}
 
 	@GetMapping("/actualstate")
 	public HouseModel actualstate() throws Exception {
-		return houseService.getHouse();
+		return ModelDAO.getInstance().read();
 	}
 
 }

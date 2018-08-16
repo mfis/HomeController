@@ -3,12 +3,9 @@ package homecontroller.domain;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -20,18 +17,13 @@ public class HouseService {
 
 	private final static int TARGET_TEMPERATURE_INSIDE = 22;
 
-	private HouseModel house;
-
 	@Autowired
 	private HomematicAPI api;
 
 	private Map<String, String> viewKeyToDevice;
 
-	private ReadWriteLock readWriteLock;
-
 	@PostConstruct
 	public void init() {
-		readWriteLock = new ReentrantReadWriteLock();
 		viewKeyToDevice = new HashMap<>();
 		viewKeyToDevice.put("tempBathroom_boost", "Vorbereitung Dusche");
 		viewKeyToDevice.put("switchKitchen", "BidCos-RF.OEQ0712456:1");
@@ -46,9 +38,7 @@ public class HouseService {
 	private void refreshAll() {
 		HouseModel newModel = refreshModel();
 		calculateConclusion(newModel);
-		readWriteLock.writeLock().lock();
-		house = newModel;
-		readWriteLock.writeLock().unlock();
+		ModelDAO.getInstance().write(newModel);
 	}
 
 	public HouseModel refreshModel() {
@@ -174,12 +164,4 @@ public class HouseService {
 	private int readPowerConsumption(String device, String chanel) {
 		return api.getAsBigDecimal(device + ":" + chanel + ".POWER").intValue();
 	}
-
-	public HouseModel getHouse() {
-		readWriteLock.readLock().lock();
-		HouseModel hm = SerializationUtils.clone(house);
-		readWriteLock.readLock().unlock();
-		return hm;
-	}
-
 }
