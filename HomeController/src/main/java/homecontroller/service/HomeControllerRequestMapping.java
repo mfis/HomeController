@@ -19,7 +19,7 @@ public class HomeControllerRequestMapping {
 	@GetMapping("/toggle")
 	public ActionModel toggle(@RequestParam("key") String key) throws Exception {
 		houseService.toggle(key);
-		return new ActionModel();
+		return new ActionModel("OK");
 	}
 
 	@GetMapping("/actualstate")

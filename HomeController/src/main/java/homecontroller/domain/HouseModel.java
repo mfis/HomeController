@@ -2,13 +2,13 @@ package homecontroller.domain;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.Date;
 
 public class HouseModel implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private LocalDateTime dateTime;
+	private long dateTime;
 
 	private BigDecimal kidsRoomTemperature;
 
@@ -68,7 +68,7 @@ public class HouseModel implements Serializable {
 
 	public HouseModel() {
 		super();
-		dateTime = LocalDateTime.now();
+		dateTime = new Date().getTime();
 	}
 
 	public BigDecimal getKidsRoomTemperature() {
@@ -279,7 +279,7 @@ public class HouseModel implements Serializable {
 		this.conclusionHintLivingRoom = conclusionHintLivingRoom;
 	}
 
-	public LocalDateTime getDateTime() {
+	public long getDateTime() {
 		return dateTime;
 	}
 }
