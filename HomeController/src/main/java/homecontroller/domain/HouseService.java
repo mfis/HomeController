@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,9 @@ import homecontroller.service.HomematicAPI;
 public class HouseService {
 
 	private final static int TARGET_TEMPERATURE_INSIDE = 22;
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	@Autowired
 	private HomematicAPI api;
@@ -28,6 +32,9 @@ public class HouseService {
 		viewKeyToDevice.put("tempBathroom_boost", "Vorbereitung Dusche");
 		viewKeyToDevice.put("switchKitchen", "BidCos-RF.OEQ0712456:1");
 		refreshAll();
+
+		// jdbc
+		jdbcTemplate.query("SELECT * FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER", new Object[] {}, new CustomerRowMapper());
 	}
 
 	@Scheduled(fixedDelay = (1000 * 60))
