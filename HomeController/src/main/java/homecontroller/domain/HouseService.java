@@ -1,7 +1,9 @@
 package homecontroller.domain;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
@@ -31,20 +33,32 @@ public class HouseService {
 		viewKeyToDevice = new HashMap<>();
 		viewKeyToDevice.put("tempBathroom_boost", "Vorbereitung Dusche");
 		viewKeyToDevice.put("switchKitchen", "BidCos-RF.OEQ0712456:1");
-		refreshAll();
+		refreshHouseModel();
+		refreshHistoryModel();
+	}
 
-		// jdbc
-		jdbcTemplate.query("SELECT * FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER", new Object[] {}, new CustomerRowMapper());
+	public void scheduledRefreshHouseModel() {
+		refreshHouseModel();
 	}
 
 	@Scheduled(fixedDelay = (1000 * 60))
-	public void scheduledRefresh() {
-		refreshAll();
-	}
-
-	private void refreshAll() {
+	private void refreshHouseModel() {
 		HouseModel newModel = refreshModel();
 		calculateConclusion(newModel);
+		ModelDAO.getInstance().write(newModel);
+	}
+
+	@Scheduled(cron = "0 0 1 * * *")
+	private void refreshHistoryModel() {
+		HistoryModel newModel = new HistoryModel();
+		List<Timestamp> timestamps = jdbcTemplate.query(
+				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER group by month order by month;", new Object[] {},
+				new TimestampRowMapper("last"));
+		for (Timestamp timestamp : timestamps) {
+			BigDecimal value = jdbcTemplate.queryForObject("select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;", new Object[] { timestamp },
+					new BigDecimalRowMapper("value"));
+			newModel.getMonthlyPowerConsumption().put(timestamp.getTime(), value);
+		}
 		ModelDAO.getInstance().write(newModel);
 	}
 
@@ -145,7 +159,7 @@ public class HouseService {
 
 	public void toggle(String key) throws Exception {
 		api.toggleBooleanState(viewKeyToDevice.get(key));
-		refreshAll();
+		refreshHouseModel();
 	}
 
 	private BigDecimal readTemperature(String device, String chanel) {

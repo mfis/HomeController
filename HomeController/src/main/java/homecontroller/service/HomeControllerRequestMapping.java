@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import homecontroller.domain.ActionModel;
+import homecontroller.domain.HistoryModel;
 import homecontroller.domain.HouseModel;
 import homecontroller.domain.HouseService;
 import homecontroller.domain.ModelDAO;
@@ -24,7 +25,12 @@ public class HomeControllerRequestMapping {
 
 	@GetMapping("/actualstate")
 	public HouseModel actualstate() throws Exception {
-		return ModelDAO.getInstance().read();
+		return ModelDAO.getInstance().readHouseModel();
+	}
+
+	@GetMapping("/history")
+	public HistoryModel history() throws Exception {
+		return ModelDAO.getInstance().readHistoryModel();
 	}
 
 }
