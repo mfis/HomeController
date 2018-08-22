@@ -52,7 +52,7 @@ public class HouseService {
 	private void refreshHistoryModel() {
 		HistoryModel newModel = new HistoryModel();
 		List<Timestamp> timestamps = jdbcTemplate.query(
-				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER group by month order by month;", new Object[] {},
+				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER group by month order by month asc;", new Object[] {},
 				new TimestampRowMapper("last"));
 		for (Timestamp timestamp : timestamps) {
 			BigDecimal value = jdbcTemplate.queryForObject("select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;", new Object[] { timestamp },
