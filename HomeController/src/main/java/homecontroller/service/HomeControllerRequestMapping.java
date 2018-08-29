@@ -17,18 +17,18 @@ public class HomeControllerRequestMapping {
 	@Autowired
 	private HouseService houseService;
 
-	@GetMapping("/toggle")
+	@GetMapping("/controller/toggle")
 	public ActionModel toggle(@RequestParam("key") String key) throws Exception {
 		houseService.toggle(key);
 		return new ActionModel("OK");
 	}
 
-	@GetMapping("/actualstate")
+	@GetMapping("/controller/actualstate")
 	public HouseModel actualstate() throws Exception {
 		return ModelDAO.getInstance().readHouseModel();
 	}
 
-	@GetMapping("/history")
+	@GetMapping("/controller/history")
 	public HistoryModel history() throws Exception {
 		return ModelDAO.getInstance().readHistoryModel();
 	}
