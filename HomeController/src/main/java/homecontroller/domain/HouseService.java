@@ -48,7 +48,7 @@ public class HouseService {
 		ModelDAO.getInstance().write(newModel);
 	}
 
-	@Scheduled(cron = "0 0 1 * * *")
+	@Scheduled(cron = "0 0 * * * *")
 	private void refreshHistoryModel() {
 		HistoryModel newModel = new HistoryModel();
 		List<Timestamp> timestamps = jdbcTemplate.query(
