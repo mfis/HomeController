@@ -2,12 +2,18 @@ package homecontroller.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,11 +36,12 @@ public class HouseService {
 
 	@PostConstruct
 	public void init() {
+
 		viewKeyToDevice = new HashMap<>();
 		viewKeyToDevice.put("tempBathroom_boost", "Vorbereitung Dusche");
 		viewKeyToDevice.put("switchKitchen", "BidCos-RF.OEQ0712456:1");
 		refreshHouseModel();
-		refreshHistoryModel();
+		refreshHistoryModelComplete();
 	}
 
 	public void scheduledRefreshHouseModel() {
@@ -43,13 +50,16 @@ public class HouseService {
 
 	@Scheduled(fixedDelay = (1000 * 60))
 	private void refreshHouseModel() {
+
 		HouseModel newModel = refreshModel();
 		calculateConclusion(newModel);
 		ModelDAO.getInstance().write(newModel);
 	}
 
-	@Scheduled(cron = "0 0 * * * *")
-	private void refreshHistoryModel() {
+	@Scheduled(cron = "5 0 0 * * *")
+	private void refreshHistoryModelComplete() {
+
+		LogFactory.getLog(HouseService.class).info("refreshHistoryModelComplete");
 		HistoryModel newModel = new HistoryModel();
 		List<Timestamp> timestamps = jdbcTemplate.query(
 				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER group by month order by month asc;", new Object[] {},
@@ -60,6 +70,36 @@ public class HouseService {
 			newModel.getMonthlyPowerConsumption().put(timestamp.getTime(), value);
 		}
 		ModelDAO.getInstance().write(newModel);
+	}
+
+	@Scheduled(cron = "0 2/3 * * * *")
+	private void refreshHistoryModel() {
+
+		LogFactory.getLog(HouseService.class).info("refreshHistoryModel");
+		HistoryModel model = ModelDAO.getInstance().readHistoryModel();
+		if (model == null) {
+			return;
+		}
+
+		Timestamp timestamp = jdbcTemplate.queryForObject("select max(ts) as time from D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER;", new TimestampRowMapper("time"));
+
+		Entry<Long, BigDecimal> lastElement = null;
+		LinkedHashMap<Long, BigDecimal> map = (LinkedHashMap<Long, BigDecimal>) model.getMonthlyPowerConsumption();
+		Iterator<Entry<Long, BigDecimal>> iterator = map.entrySet().iterator();
+		HashMap<Long, BigDecimal> newMap = new LinkedHashMap<Long, BigDecimal>();
+		while (iterator.hasNext()) {
+			lastElement = iterator.next();
+			if (iterator.hasNext()) {
+				newMap.put(lastElement.getKey(), lastElement.getValue());
+			}
+		}
+
+		if (timestamp.getTime() > lastElement.getKey() && DateUtils.isSameDay(timestamp, new Date(lastElement.getKey()))) {
+			BigDecimal value = jdbcTemplate.queryForObject("select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;", new Object[] { timestamp },
+					new BigDecimalRowMapper("value"));
+			newMap.put(timestamp.getTime(), value);
+			model.setMonthlyPowerConsumption(newMap);
+		}
 	}
 
 	public HouseModel refreshModel() {

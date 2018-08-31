@@ -44,7 +44,7 @@ public class ModelDAO {
 	}
 
 	public HistoryModel readHistoryModel() {
-		if (new Date().getTime() - historyModel.getDateTime() > 1000 * 60 * 60 * 24) {
+		if (historyModel == null || new Date().getTime() - historyModel.getDateTime() > 1000 * 60 * 60 * 25) {
 			return null; // Too old. Should never happen
 		} else {
 			return historyModel;
