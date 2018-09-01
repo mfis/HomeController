@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.time.DateUtils;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -59,7 +58,6 @@ public class HouseService {
 	@Scheduled(cron = "5 0 0 * * *")
 	private void refreshHistoryModelComplete() {
 
-		LogFactory.getLog(HouseService.class).info("refreshHistoryModelComplete");
 		HistoryModel newModel = new HistoryModel();
 		List<Timestamp> timestamps = jdbcTemplate.query(
 				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER group by month order by month asc;", new Object[] {},
@@ -75,7 +73,6 @@ public class HouseService {
 	@Scheduled(cron = "0 2/3 * * * *")
 	private void refreshHistoryModel() {
 
-		LogFactory.getLog(HouseService.class).info("refreshHistoryModel");
 		HistoryModel model = ModelDAO.getInstance().readHistoryModel();
 		if (model == null) {
 			return;
