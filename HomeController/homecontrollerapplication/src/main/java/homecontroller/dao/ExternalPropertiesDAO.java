@@ -1,4 +1,4 @@
-package homecontroller.service;
+package homecontroller.dao;
 
 import java.io.File;
 import java.io.FileInputStream;

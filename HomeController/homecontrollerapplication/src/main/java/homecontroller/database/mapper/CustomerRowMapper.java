@@ -1,4 +1,4 @@
-package homecontroller.domain;
+package homecontroller.database.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,7 +9,6 @@ public class CustomerRowMapper implements RowMapper<Object> {
 
 	@Override
 	public Object mapRow(ResultSet rs, int rowNum) throws SQLException {
-		System.out.println(rs.getBigDecimal("value"));
 		return null;
 	}
 

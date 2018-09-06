@@ -1,4 +1,4 @@
-package homecontroller.domain;
+package homecontroller.domain.service;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -19,6 +19,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import homecontroller.dao.ModelDAO;
+import homecontroller.database.mapper.BigDecimalRowMapper;
+import homecontroller.database.mapper.TimestampRowMapper;
+import homecontroller.domain.model.HistoryModel;
+import homecontroller.domain.model.HouseModel;
+import homecontroller.domain.model.Intensity;
 import homecontroller.service.HomematicAPI;
 
 @Component

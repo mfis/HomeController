@@ -1,15 +1,15 @@
-package homecontroller.service;
+package homecontroller.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import homecontroller.domain.ActionModel;
-import homecontroller.domain.HistoryModel;
-import homecontroller.domain.HouseModel;
-import homecontroller.domain.HouseService;
-import homecontroller.domain.ModelDAO;
+import homecontroller.dao.ModelDAO;
+import homecontroller.domain.model.ActionModel;
+import homecontroller.domain.model.HistoryModel;
+import homecontroller.domain.model.HouseModel;
+import homecontroller.domain.service.HouseService;
 
 @RestController
 public class HomeControllerRequestMapping {

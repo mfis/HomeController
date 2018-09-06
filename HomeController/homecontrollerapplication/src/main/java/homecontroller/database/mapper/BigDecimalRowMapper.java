@@ -1,4 +1,4 @@
-package homecontroller.domain;
+package homecontroller.database.mapper;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;

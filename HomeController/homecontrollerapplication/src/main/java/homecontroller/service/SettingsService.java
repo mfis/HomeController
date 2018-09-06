@@ -3,6 +3,8 @@ package homecontroller.service;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+import homecontroller.dao.ExternalPropertiesDAO;
+
 @Component
 public class SettingsService {
 

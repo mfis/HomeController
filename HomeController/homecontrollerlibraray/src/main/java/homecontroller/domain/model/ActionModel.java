@@ -1,4 +1,4 @@
-package homecontroller.domain;
+package homecontroller.domain.model;
 
 import java.io.Serializable;
 

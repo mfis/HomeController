@@ -1,6 +1,9 @@
-package homecontroller.domain;
+package homecontroller.dao;
 
 import java.util.Date;
+
+import homecontroller.domain.model.HistoryModel;
+import homecontroller.domain.model.HouseModel;
 
 public class ModelDAO {
 
