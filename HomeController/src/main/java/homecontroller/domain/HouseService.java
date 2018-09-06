@@ -2,6 +2,7 @@ package homecontroller.domain;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,7 +13,7 @@ import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 
-import org.apache.commons.lang3.time.DateUtils;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -39,8 +40,12 @@ public class HouseService {
 		viewKeyToDevice = new HashMap<>();
 		viewKeyToDevice.put("tempBathroom_boost", "Vorbereitung Dusche");
 		viewKeyToDevice.put("switchKitchen", "BidCos-RF.OEQ0712456:1");
-		refreshHouseModel();
-		refreshHistoryModelComplete();
+		try {
+			refreshHouseModel();
+			refreshHistoryModelComplete();
+		} catch (Exception e) {
+			LogFactory.getLog(HouseService.class).error("Could not initialize HouseService completly.", e);
+		}
 	}
 
 	public void scheduledRefreshHouseModel() {
@@ -78,6 +83,11 @@ public class HouseService {
 			return;
 		}
 
+		if (model.getMonthlyPowerConsumption() == null || model.getMonthlyPowerConsumption().isEmpty()) {
+			refreshHistoryModelComplete();
+			return;
+		}
+
 		Timestamp timestamp = jdbcTemplate.queryForObject("select max(ts) as time from D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER;", new TimestampRowMapper("time"));
 
 		Entry<Long, BigDecimal> lastElement = null;
@@ -91,12 +101,26 @@ public class HouseService {
 			}
 		}
 
-		if (timestamp.getTime() > lastElement.getKey() && DateUtils.isSameDay(timestamp, new Date(lastElement.getKey()))) {
+		if (timestamp.getTime() > lastElement.getKey() && isSameMonth(timestamp, new Date(lastElement.getKey()))) {
 			BigDecimal value = jdbcTemplate.queryForObject("select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;", new Object[] { timestamp },
 					new BigDecimalRowMapper("value"));
 			newMap.put(timestamp.getTime(), value);
 			model.setMonthlyPowerConsumption(newMap);
 		}
+	}
+
+	private boolean isSameMonth(Date date1, Date date2) {
+
+		Calendar cal1 = Calendar.getInstance();
+		cal1.setTime(date1);
+		Calendar cal2 = Calendar.getInstance();
+		cal2.setTime(date2);
+
+		if (cal1 == null || cal2 == null) {
+			return false;
+		}
+
+		return cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA) && cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
 	}
 
 	public HouseModel refreshModel() {
