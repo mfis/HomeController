@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -224,6 +225,20 @@ public class HouseService {
 
 	public void toggle(String devIdVar) throws Exception {
 		api.toggleBooleanState(devIdVar);
+		refreshHouseModel();
+	}
+
+	public synchronized void heatingBoost(String prefix) throws Exception {
+		api.runProgram(prefix + "Boost");
+		refreshHouseModel();
+	}
+
+	// needs to be synchronized because of using ccu-systemwide temperature
+	// variable
+	public synchronized void heatingManual(String prefix, String temperature) throws Exception {
+		temperature = StringUtils.replace(temperature, ",", "."); // decimalpoint
+		api.changeValue(prefix + "Temperature", temperature);
+		api.runProgram(prefix + "Manual");
 		refreshHouseModel();
 	}
 

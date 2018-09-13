@@ -23,9 +23,15 @@ public class HomeControllerRequestMapping {
 		return new ActionModel("OK");
 	}
 
-	@GetMapping("/controller/heating")
-	public ActionModel heating(@RequestParam("prefix") String prefix, @RequestParam("temperature") String temperature) throws Exception {
-		// houseService.toggle(devIdVar);
+	@GetMapping("/controller/heatingboost")
+	public ActionModel heatingBoost(@RequestParam("prefix") String prefix) throws Exception {
+		houseService.heatingBoost(prefix);
+		return new ActionModel("OK");
+	}
+
+	@GetMapping("/controller/heatingmanual")
+	public ActionModel heatingManual(@RequestParam("prefix") String prefix, @RequestParam("temperature") String temperature) throws Exception {
+		houseService.heatingManual(prefix, temperature);
 		return new ActionModel("OK");
 	}
 

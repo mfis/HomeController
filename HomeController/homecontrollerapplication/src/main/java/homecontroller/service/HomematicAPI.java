@@ -64,9 +64,21 @@ public class HomematicAPI {
 		}
 	}
 
+	public void changeValue(String key, String value) {
+		String iseID = currentStateIDs.get(key);
+		String url = host + "/addons/xmlapi/statechange.cgi?ise_id=" + iseID + "&new_value=" + value;
+		documentFromUrl(url);
+	}
+
 	public void toggleBooleanState(String key) {
 		String iseID = currentStateIDs.get(key);
 		String url = host + "/addons/xmlapi/statechange.cgi?ise_id=" + iseID + "&new_value=" + Boolean.toString(!getAsBoolean(key));
+		documentFromUrl(url);
+	}
+
+	public void runProgram(String name) {
+		String id = currentStateIDs.get(name);
+		String url = host + "/addons/xmlapi/runprogram.cgi?program_id=" + id;
 		documentFromUrl(url);
 	}
 
@@ -97,6 +109,14 @@ public class HomematicAPI {
 				currentValues.put(eElement.getAttribute("name"), eElement.getAttribute("value"));
 			}
 			currentStateIDs.put(eElement.getAttribute("name"), eElement.getAttribute("ise_id"));
+		}
+
+		doc = documentFromUrl(host + "/addons/xmlapi/programlist.cgi");
+		NodeList programs = doc.getElementsByTagName("program");
+		for (int dap = 0; dap < programs.getLength(); dap++) {
+			Node c = programs.item(dap);
+			Element eElement = (Element) c;
+			currentStateIDs.put(eElement.getAttribute("name"), eElement.getAttribute("id"));
 		}
 
 	}
