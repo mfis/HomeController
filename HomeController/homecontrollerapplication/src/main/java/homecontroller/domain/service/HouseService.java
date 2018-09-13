@@ -36,6 +36,8 @@ public class HouseService {
 
 	private final static BigDecimal HEATING_CONTROL_MODE_BOOST = new BigDecimal(3);
 
+	private final static Object refreshMonitor = new Object();
+
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
@@ -46,23 +48,28 @@ public class HouseService {
 	public void init() {
 
 		try {
-			refreshHouseModel();
+			refreshHouseModel(false);
 			refreshHistoryModelComplete();
 		} catch (Exception e) {
 			LogFactory.getLog(HouseService.class).error("Could not initialize HouseService completly.", e);
 		}
 	}
 
-	public void scheduledRefreshHouseModel() {
-		refreshHouseModel();
+	@Scheduled(fixedDelay = (1000 * 60))
+	private void scheduledRefreshHouseModel() {
+		refreshHouseModel(false);
 	}
 
-	@Scheduled(fixedDelay = (1000 * 60))
-	private void refreshHouseModel() {
+	public void refreshHouseModel(boolean notify) {
 
 		HouseModel newModel = refreshModel();
 		calculateConclusion(newModel);
 		ModelDAO.getInstance().write(newModel);
+		if (notify) {
+			synchronized (refreshMonitor) {
+				refreshMonitor.notify();
+			}
+		}
 	}
 
 	@Scheduled(cron = "5 0 0 * * *")
@@ -128,7 +135,7 @@ public class HouseService {
 		return cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA) && cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
 	}
 
-	public HouseModel refreshModel() {
+	private HouseModel refreshModel() {
 
 		api.refresh();
 
@@ -225,12 +232,14 @@ public class HouseService {
 
 	public void toggle(String devIdVar) throws Exception {
 		api.toggleBooleanState(devIdVar);
-		refreshHouseModel();
+		refreshHouseModel(false);
 	}
 
 	public synchronized void heatingBoost(String prefix) throws Exception {
 		api.runProgram(prefix + "Boost");
-		refreshHouseModel();
+		synchronized (refreshMonitor) {
+			refreshMonitor.wait(5000);
+		}
 	}
 
 	// needs to be synchronized because of using ccu-systemwide temperature
@@ -239,7 +248,9 @@ public class HouseService {
 		temperature = StringUtils.replace(temperature, ",", "."); // decimalpoint
 		api.changeValue(prefix + "Temperature", temperature);
 		api.runProgram(prefix + "Manual");
-		refreshHouseModel();
+		synchronized (refreshMonitor) {
+			refreshMonitor.wait(5000);
+		}
 	}
 
 	private BigDecimal readTemperature(String device, String chanel) {

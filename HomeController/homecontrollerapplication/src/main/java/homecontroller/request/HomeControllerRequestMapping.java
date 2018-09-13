@@ -17,6 +17,12 @@ public class HomeControllerRequestMapping {
 	@Autowired
 	private HouseService houseService;
 
+	@GetMapping("/controller/refresh")
+	public ActionModel refresh() throws Exception {
+		houseService.refreshHouseModel(true);
+		return new ActionModel("OK");
+	}
+
 	@GetMapping("/controller/toggle")
 	public ActionModel toggle(@RequestParam("devIdVar") String devIdVar) throws Exception {
 		houseService.toggle(devIdVar);

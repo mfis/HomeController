@@ -76,7 +76,10 @@ public class HomematicAPI {
 		documentFromUrl(url);
 	}
 
-	public void runProgram(String name) {
+	public synchronized void runProgram(String name) {
+
+		changeValue("refreshadress", env.getProperty("refresh.adress"));
+
 		String id = currentStateIDs.get(name);
 		String url = host + "/addons/xmlapi/runprogram.cgi?program_id=" + id;
 		documentFromUrl(url);
