@@ -16,7 +16,7 @@ public class HouseModel implements Serializable {
 
 	private BigDecimal bathRoomTemperature;
 
-	private boolean bathRoomBoost;
+	private HeatingModel bathRoomHeating;
 
 	private BigDecimal bedRoomTemperature;
 
@@ -34,7 +34,7 @@ public class HouseModel implements Serializable {
 
 	private BigDecimal entranceSunHeatingDiff;
 
-	private boolean kitchenLightSwitchState;
+	private SwitchModel kitchenWindowLightSwitch;
 
 	private int houseElectricalPowerConsumption;
 
@@ -167,22 +167,6 @@ public class HouseModel implements Serializable {
 		this.houseElectricalPowerConsumption = houseElectricalPowerConsumption;
 	}
 
-	public boolean isBathRoomBoost() {
-		return bathRoomBoost;
-	}
-
-	public void setBathRoomBoost(boolean bathRoomBoost) {
-		this.bathRoomBoost = bathRoomBoost;
-	}
-
-	public boolean isKitchenLightSwitchState() {
-		return kitchenLightSwitchState;
-	}
-
-	public void setKitchenLightSwitchState(boolean kitchenLightSwitchState) {
-		this.kitchenLightSwitchState = kitchenLightSwitchState;
-	}
-
 	public BigDecimal getConclusionFacadeMinTemp() {
 		return conclusionFacadeMinTemp;
 	}
@@ -281,5 +265,21 @@ public class HouseModel implements Serializable {
 
 	public long getDateTime() {
 		return dateTime;
+	}
+
+	public HeatingModel getBathRoomHeating() {
+		return bathRoomHeating;
+	}
+
+	public void setBathRoomHeating(HeatingModel bathRoomHeating) {
+		this.bathRoomHeating = bathRoomHeating;
+	}
+
+	public SwitchModel getKitchenWindowLightSwitch() {
+		return kitchenWindowLightSwitch;
+	}
+
+	public void setKitchenWindowLightSwitch(SwitchModel kitchenWindowLightSwitch) {
+		this.kitchenWindowLightSwitch = kitchenWindowLightSwitch;
 	}
 }

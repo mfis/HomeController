@@ -18,8 +18,14 @@ public class HomeControllerRequestMapping {
 	private HouseService houseService;
 
 	@GetMapping("/controller/toggle")
-	public ActionModel toggle(@RequestParam("key") String key) throws Exception {
-		houseService.toggle(key);
+	public ActionModel toggle(@RequestParam("devIdVar") String devIdVar) throws Exception {
+		houseService.toggle(devIdVar);
+		return new ActionModel("OK");
+	}
+
+	@GetMapping("/controller/heating")
+	public ActionModel heating(@RequestParam("prefix") String prefix, @RequestParam("temperature") String temperature) throws Exception {
+		// houseService.toggle(devIdVar);
 		return new ActionModel("OK");
 	}
 

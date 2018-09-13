@@ -4,17 +4,13 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
@@ -35,7 +31,6 @@ public class HomematicAPI {
 	private Environment env;
 
 	private String host;
-	private List<String> hmDevicePrefixes;
 
 	private Map<String, String> currentValues;
 	private Map<String, String> currentStateIDs;
@@ -43,7 +38,6 @@ public class HomematicAPI {
 	@PostConstruct
 	public void init() {
 		host = env.getProperty("homematic.hostName");
-		hmDevicePrefixes = new ArrayList<String>(Arrays.asList(env.getProperty("homematic.devicePrefixes").split(",")));
 	}
 
 	public String getAsString(String key) {
@@ -71,10 +65,6 @@ public class HomematicAPI {
 	}
 
 	public void toggleBooleanState(String key) {
-
-		if (hmDevicePrefixes.contains(StringUtils.substringBefore(key, ".")) && !key.endsWith(".STATE")) {
-			key += ".STATE";
-		}
 		String iseID = currentStateIDs.get(key);
 		String url = host + "/addons/xmlapi/statechange.cgi?ise_id=" + iseID + "&new_value=" + Boolean.toString(!getAsBoolean(key));
 		documentFromUrl(url);

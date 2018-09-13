@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
@@ -22,9 +21,11 @@ import org.springframework.stereotype.Component;
 import homecontroller.dao.ModelDAO;
 import homecontroller.database.mapper.BigDecimalRowMapper;
 import homecontroller.database.mapper.TimestampRowMapper;
+import homecontroller.domain.model.HeatingModel;
 import homecontroller.domain.model.HistoryModel;
 import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.Intensity;
+import homecontroller.domain.model.SwitchModel;
 import homecontroller.service.HomematicAPI;
 
 @Component
@@ -32,20 +33,17 @@ public class HouseService {
 
 	private final static int TARGET_TEMPERATURE_INSIDE = 22;
 
+	private final static BigDecimal HEATING_CONTROL_MODE_BOOST = new BigDecimal(3);
+
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
 	@Autowired
 	private HomematicAPI api;
 
-	private Map<String, String> viewKeyToDevice;
-
 	@PostConstruct
 	public void init() {
 
-		viewKeyToDevice = new HashMap<>();
-		viewKeyToDevice.put("tempBathroom_boost", "Vorbereitung Dusche");
-		viewKeyToDevice.put("switchKitchen", "BidCos-RF.OEQ0712456:1");
 		try {
 			refreshHouseModel();
 			refreshHistoryModelComplete();
@@ -136,7 +134,7 @@ public class HouseService {
 		HouseModel newModel = new HouseModel();
 
 		newModel.setBathRoomTemperature(readActTemperature("BidCos-RF.OEQ0854602", "4"));
-		newModel.setBathRoomBoost(readBoost("Vorbereitung Dusche"));
+		newModel.setBathRoomHeating(readHeating("BidCos-RF.OEQ0854602", "4", "ThermostatBad"));
 
 		newModel.setKidsRoomTemperature(readActTemperature("HmIP-RF.000E97099314A3", "1"));
 		newModel.setKidsRoomHumidity(readHumidity("HmIP-RF.000E97099314A3", "1"));
@@ -153,7 +151,7 @@ public class HouseService {
 		newModel.setEntranceTemperature(readTemperature("BidCos-RF.OEQ0801807", "2"));
 		newModel.setEntranceSunHeatingDiff(readTemperature("BidCos-RF.OEQ0801807", "3"));
 
-		newModel.setKitchenLightSwitchState(readSwitchState("BidCos-RF.OEQ0712456", "1"));
+		newModel.setKitchenWindowLightSwitch(readSwitchState("BidCos-RF.OEQ0712456", "1"));
 
 		newModel.setHouseElectricalPowerConsumption(readPowerConsumption("BidCos-RF.NEQ0861520", "1"));
 
@@ -224,8 +222,8 @@ public class HouseService {
 		}
 	}
 
-	public void toggle(String key) throws Exception {
-		api.toggleBooleanState(viewKeyToDevice.get(key));
+	public void toggle(String devIdVar) throws Exception {
+		api.toggleBooleanState(devIdVar);
 		refreshHouseModel();
 	}
 
@@ -241,12 +239,21 @@ public class HouseService {
 		return api.getAsBigDecimal(device + ":" + chanel + ".HUMIDITY");
 	}
 
-	private boolean readBoost(String var) {
-		return api.getAsBoolean(var);
+	private HeatingModel readHeating(String device, String chanel, String programNamePrefix) {
+		HeatingModel model = new HeatingModel();
+		model.setBoostActive(api.getAsBigDecimal(device + ":" + chanel + ".CONTROL_MODE").compareTo(HEATING_CONTROL_MODE_BOOST) == 0);
+		model.setBoostMinutesLeft(api.getAsBigDecimal(device + ":" + chanel + ".BOOST_STATE").intValue());
+		model.setTargetTemperature(api.getAsBigDecimal(device + ":" + chanel + ".SET_TEMPERATURE"));
+		model.setProgramNamePrefix(programNamePrefix);
+		return model;
 	}
 
-	private boolean readSwitchState(String device, String chanel) {
-		return api.getAsBoolean(device + ":" + chanel + ".STATE");
+	private SwitchModel readSwitchState(String device, String chanel) {
+		SwitchModel switchModel = new SwitchModel();
+		String devIdVar = device + ":" + chanel + ".STATE";
+		switchModel.setState(api.getAsBoolean(devIdVar));
+		switchModel.setDeviceIdVar(devIdVar);
+		return switchModel;
 	}
 
 	private int readPowerConsumption(String device, String chanel) {
