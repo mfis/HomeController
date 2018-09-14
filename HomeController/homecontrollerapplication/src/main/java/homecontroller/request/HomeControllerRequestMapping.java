@@ -18,8 +18,10 @@ public class HomeControllerRequestMapping {
 	private HouseService houseService;
 
 	@GetMapping("/controller/refresh")
-	public ActionModel refresh() throws Exception {
-		houseService.refreshHouseModel(true);
+	public ActionModel refresh(@RequestParam("notify") String notifyString) throws Exception {
+		boolean notify = Boolean.valueOf(notifyString);
+		System.out.println("refresh " + notify);
+		houseService.refreshHouseModel(notify);
 		return new ActionModel("OK");
 	}
 
