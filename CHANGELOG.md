@@ -1,4 +1,4 @@
-# Home Change Log
+# HomeController Change Log
 
 ## 0.9.0
 - read/write heater thermostat states
