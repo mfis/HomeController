@@ -34,9 +34,13 @@ public class HouseService {
 
 	private final static int TARGET_TEMPERATURE_INSIDE = 22;
 
+	private final static BigDecimal SUN_INTENSITY_LOW = new BigDecimal("6");
+	private final static BigDecimal SUN_INTENSITY_MEDIUM = new BigDecimal("13");
+
 	private final static BigDecimal HEATING_CONTROL_MODE_BOOST = new BigDecimal(3);
 
-	private final static Object refreshMonitor = new Object();
+	private final static Object REFRESH_MONITOR = new Object();
+	private final static long REFRESH_TIMEOUT = 5 * 1000; // 5 sec
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
@@ -66,8 +70,8 @@ public class HouseService {
 		calculateConclusion(newModel);
 		ModelDAO.getInstance().write(newModel);
 		if (notify) {
-			synchronized (refreshMonitor) {
-				refreshMonitor.notify();
+			synchronized (REFRESH_MONITOR) {
+				REFRESH_MONITOR.notify();
 			}
 		}
 	}
@@ -221,9 +225,9 @@ public class HouseService {
 	private Intensity lookupIntensity(BigDecimal value, int noIntensityGate) {
 		if (value.compareTo(new BigDecimal(noIntensityGate)) < 0) {
 			return Intensity.NO;
-		} else if (value.compareTo(new BigDecimal(6)) < 0) {
+		} else if (value.compareTo(SUN_INTENSITY_LOW) < 0) {
 			return Intensity.LOW;
-		} else if (value.compareTo(new BigDecimal(13)) < 0) {
+		} else if (value.compareTo(SUN_INTENSITY_MEDIUM) < 0) {
 			return Intensity.MEDIUM;
 		} else {
 			return Intensity.HIGH;
@@ -237,8 +241,8 @@ public class HouseService {
 
 	public synchronized void heatingBoost(String prefix) throws Exception {
 		api.runProgram(prefix + "Boost");
-		synchronized (refreshMonitor) {
-			refreshMonitor.wait(5000);
+		synchronized (REFRESH_MONITOR) {
+			REFRESH_MONITOR.wait(REFRESH_TIMEOUT);
 		}
 	}
 
@@ -248,8 +252,8 @@ public class HouseService {
 		temperature = StringUtils.replace(temperature, ",", "."); // decimalpoint
 		api.changeValue(prefix + "Temperature", temperature);
 		api.runProgram(prefix + "Manual");
-		synchronized (refreshMonitor) {
-			refreshMonitor.wait(5000);
+		synchronized (REFRESH_MONITOR) {
+			REFRESH_MONITOR.wait(REFRESH_TIMEOUT);
 		}
 	}
 
