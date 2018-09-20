@@ -9,13 +9,18 @@ import homecontroller.dao.ModelDAO;
 import homecontroller.domain.model.ActionModel;
 import homecontroller.domain.model.HistoryModel;
 import homecontroller.domain.model.HouseModel;
+import homecontroller.domain.model.SettingsModel;
 import homecontroller.domain.service.HouseService;
+import homecontroller.service.SettingsService;
 
 @RestController
 public class HomeControllerRequestMapping {
 
 	@Autowired
 	private HouseService houseService;
+
+	@Autowired
+	private SettingsService settingsService;
 
 	@GetMapping("/controller/refresh")
 	public ActionModel refresh(@RequestParam("notify") String notifyString) throws Exception {
@@ -52,4 +57,22 @@ public class HomeControllerRequestMapping {
 		return ModelDAO.getInstance().readHistoryModel();
 	}
 
+	@GetMapping("/controller/settings")
+	public SettingsModel settings(@RequestParam("user") String user) throws Exception {
+		SettingsModel settings = settingsService.read(user);
+		return settings;
+	}
+
+	@GetMapping("/controller/settingspushtoggle")
+	public ActionModel settingspushtoggle(@RequestParam("user") String user) throws Exception {
+		settingsService.togglePush(user);
+		return new ActionModel("OK");
+	}
+
+	@GetMapping("/controller/settingspushover")
+	public ActionModel settingspushover(@RequestParam("user") String user, @RequestParam("token") String token, @RequestParam("userid") String userid,
+			@RequestParam("device") String device) throws Exception {
+		settingsService.setupPush(user, token, userid, device);
+		return new ActionModel("OK");
+	}
 }

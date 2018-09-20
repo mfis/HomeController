@@ -32,7 +32,7 @@ import homecontroller.service.HomematicAPI;
 @Component
 public class HouseService {
 
-	private final static int TARGET_TEMPERATURE_INSIDE = 22;
+	private final static BigDecimal TARGET_TEMPERATURE_INSIDE = new BigDecimal("22");
 
 	private final static BigDecimal SUN_INTENSITY_LOW = new BigDecimal("6");
 	private final static BigDecimal SUN_INTENSITY_MEDIUM = new BigDecimal("13");
@@ -209,13 +209,13 @@ public class HouseService {
 
 		if (insideTemperature == null) {
 			return null;
-		} else if (insideTemperature.intValue() <= TARGET_TEMPERATURE_INSIDE) {
+		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) < 0) {
 			// TODO: using sun heating in the winter for warming up rooms
 			return null;
-		} else if (insideTemperature.compareTo(new BigDecimal(TARGET_TEMPERATURE_INSIDE)) > 0 && outsideTemperature.compareTo(insideTemperature) < 0
+		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0 && outsideTemperature.compareTo(insideTemperature) < 0
 				&& sunIntensity.ordinal() <= Intensity.LOW.ordinal()) {
 			return "Fenster öffnen";
-		} else if (insideTemperature.compareTo(new BigDecimal(TARGET_TEMPERATURE_INSIDE)) > 0 && sunIntensity.ordinal() > Intensity.LOW.ordinal()) {
+		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0 && sunIntensity.ordinal() > Intensity.LOW.ordinal()) {
 			return "Rolladen schließen";
 		}
 

@@ -71,6 +71,9 @@ public class HomematicAPI {
 	}
 
 	public void toggleBooleanState(String key) {
+
+		changeValue("refreshadress", env.getProperty("refresh.adress"));
+
 		String iseID = currentStateIDs.get(key);
 		String url = host + "/addons/xmlapi/statechange.cgi?ise_id=" + iseID + "&new_value=" + Boolean.toString(!getAsBoolean(key));
 		documentFromUrl(url);
