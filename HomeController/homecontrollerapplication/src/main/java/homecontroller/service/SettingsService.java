@@ -1,5 +1,8 @@
 package homecontroller.service;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +47,22 @@ public class SettingsService {
 		ExternalPropertiesDAO.getInstance().write(user + PUSH_TOKEN, StringUtils.trimToEmpty(token));
 		ExternalPropertiesDAO.getInstance().write(user + PUSH_USERID, StringUtils.trimToEmpty(userid));
 		ExternalPropertiesDAO.getInstance().write(user + PUSH_DEVICE, StringUtils.trimToEmpty(device));
+	}
+
+	public List<SettingsModel> lookupUserForPushMessage() {
+
+		List<SettingsModel> userModelsWithActivePush = new LinkedList<>();
+
+		List<String> names = ExternalPropertiesDAO.getInstance().lookupNamesContainingString(PUSH_ACTIVE);
+		for (String name : names) {
+			String user = StringUtils.substringBefore(name, PUSH_ACTIVE);
+			SettingsModel model = read(user);
+			if (model.isPushActive()) {
+				userModelsWithActivePush.add(model);
+			}
+		}
+
+		return userModelsWithActivePush;
 	}
 
 }

@@ -48,6 +48,9 @@ public class HouseService {
 	@Autowired
 	private HomematicAPI api;
 
+	@Autowired
+	private PushService pushService;
+
 	@PostConstruct
 	public void init() {
 
@@ -66,14 +69,19 @@ public class HouseService {
 
 	public void refreshHouseModel(boolean notify) {
 
+		HouseModel oldModel = ModelDAO.getInstance().readHouseModel();
+
 		HouseModel newModel = refreshModel();
 		calculateConclusion(newModel);
 		ModelDAO.getInstance().write(newModel);
+
 		if (notify) {
 			synchronized (REFRESH_MONITOR) {
 				REFRESH_MONITOR.notify();
 			}
 		}
+
+		pushService.send(oldModel, newModel);
 	}
 
 	@Scheduled(cron = "5 0 0 * * *")

@@ -4,7 +4,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class ExternalPropertiesDAO {
 
@@ -53,7 +57,18 @@ public class ExternalPropertiesDAO {
 		return properties.getProperty(key);
 	}
 
-	public Properties getApplicationProperties() {
+	public List<String> lookupNamesContainingString(String string) {
+
+		List<String> names = new LinkedList<>();
+		for (Object key : properties.keySet()) {
+			if (StringUtils.contains(key.toString(), string)) {
+				names.add(key.toString());
+			}
+		}
+		return names;
+	}
+
+	private Properties getApplicationProperties() {
 		properties = new Properties();
 		try {
 			File file = new File(System.getProperty("user.home") + "/documents/config/homecontrolleruser.properties");
