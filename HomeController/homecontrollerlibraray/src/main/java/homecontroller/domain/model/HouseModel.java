@@ -1,8 +1,11 @@
 package homecontroller.domain.model;
 
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 public class HouseModel implements Serializable {
 
@@ -56,19 +59,37 @@ public class HouseModel implements Serializable {
 
 	private Intensity conclusionFacadeMaxTempHeatingIntensity;
 
-	private String conclusionHintKidsRoom;
+	// ----------
 
-	private String conclusionHintBathRoom;
+	private Hint conclusionHintKidsRoom;
 
-	private String conclusionHintBedRoom;
+	private Hint conclusionHintBathRoom;
 
-	private String conclusionHintLivingRoom;
+	private Hint conclusionHintBedRoom;
+
+	private Hint conclusionHintLivingRoom;
 
 	// ----------
 
 	public HouseModel() {
 		super();
 		dateTime = new Date().getTime();
+	}
+
+	public List<Hint> lookupHints() {
+
+		Field[] fields = this.getClass().getDeclaredFields();
+		List<Hint> results = new LinkedList<Hint>();
+		try {
+			for (Field field : fields) {
+				if (field.getType().equals(Hint.class)) {
+					results.add((Hint) field.get(this));
+				}
+			}
+		} catch (IllegalArgumentException | IllegalAccessException e) {
+			throw new RuntimeException("Exception collecting hints:", e);
+		}
+		return results;
 	}
 
 	public BigDecimal getKidsRoomTemperature() {
@@ -231,35 +252,35 @@ public class HouseModel implements Serializable {
 		this.conclusionFacadeMaxTempHeatingIntensity = conclusionFacadeMaxTempHeatingIntensity;
 	}
 
-	public String getConclusionHintKidsRoom() {
+	public Hint getConclusionHintKidsRoom() {
 		return conclusionHintKidsRoom;
 	}
 
-	public void setConclusionHintKidsRoom(String conclusionHintKidsRoom) {
+	public void setConclusionHintKidsRoom(Hint conclusionHintKidsRoom) {
 		this.conclusionHintKidsRoom = conclusionHintKidsRoom;
 	}
 
-	public String getConclusionHintBathRoom() {
+	public Hint getConclusionHintBathRoom() {
 		return conclusionHintBathRoom;
 	}
 
-	public void setConclusionHintBathRoom(String conclusionHintBathRoom) {
+	public void setConclusionHintBathRoom(Hint conclusionHintBathRoom) {
 		this.conclusionHintBathRoom = conclusionHintBathRoom;
 	}
 
-	public String getConclusionHintBedRoom() {
+	public Hint getConclusionHintBedRoom() {
 		return conclusionHintBedRoom;
 	}
 
-	public void setConclusionHintBedRoom(String conclusionHintBedRoom) {
+	public void setConclusionHintBedRoom(Hint conclusionHintBedRoom) {
 		this.conclusionHintBedRoom = conclusionHintBedRoom;
 	}
 
-	public String getConclusionHintLivingRoom() {
+	public Hint getConclusionHintLivingRoom() {
 		return conclusionHintLivingRoom;
 	}
 
-	public void setConclusionHintLivingRoom(String conclusionHintLivingRoom) {
+	public void setConclusionHintLivingRoom(Hint conclusionHintLivingRoom) {
 		this.conclusionHintLivingRoom = conclusionHintLivingRoom;
 	}
 

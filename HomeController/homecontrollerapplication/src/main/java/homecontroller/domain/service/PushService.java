@@ -16,6 +16,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import homecontroller.domain.model.Hint;
 import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.SettingsModel;
 import homecontroller.service.SettingsService;
@@ -45,13 +46,13 @@ public class PushService {
 		ps.settingsService = new SettingsService();
 
 		HouseModel oldModel = new HouseModel();
-		oldModel.setConclusionHintBathRoom("Fenster öffnen");
-		oldModel.setConclusionHintLivingRoom("Gleich Wohn");
+		oldModel.setConclusionHintBathRoom(new Hint("Fenster öffnen", "Badezimmer"));
+		oldModel.setConclusionHintLivingRoom(new Hint("Gleich Wohn", "Wohnzimmer"));
 
 		HouseModel newModel = new HouseModel();
-		newModel.setConclusionHintLivingRoom("Gleich Wohn");
-		newModel.setConclusionHintKidsRoom("Fenster öffnen");
-		newModel.setConclusionHintBedRoom("Rolladen schließen");
+		newModel.setConclusionHintLivingRoom(new Hint("Gleich Wohn", "Wohnzimmer"));
+		newModel.setConclusionHintKidsRoom(new Hint("Fenster öffnen", "Kinderzimmer"));
+		newModel.setConclusionHintBedRoom(new Hint("Rolladen schließen", "Schlafzimmer"));
 
 		ps.send(oldModel, newModel);
 
@@ -109,12 +110,11 @@ public class PushService {
 
 	private List<String> hintList(HouseModel model) {
 
-		List<String> hints = new LinkedList<>();
-		hints.add(model.getConclusionHintLivingRoom() != null ? "Wohnzimmer " + model.getConclusionHintLivingRoom() : null);
-		hints.add(model.getConclusionHintBathRoom() != null ? "Badezimmer " + model.getConclusionHintBathRoom() : null);
-		hints.add(model.getConclusionHintBedRoom() != null ? "Schlafzimmer " + model.getConclusionHintBedRoom() : null);
-		hints.add(model.getConclusionHintKidsRoom() != null ? "Kinderzimmer " + model.getConclusionHintKidsRoom() : null);
-		return hints;
+		List<String> hintStrings = new LinkedList<>();
+		for (Hint hint : model.lookupHints()) {
+			hintStrings.add(hint != null ? hint.formatWithRoomName() : null);
+		}
+		return hintStrings;
 	}
 
 	private void sendMessages(String messages, SettingsModel settingsModel) {

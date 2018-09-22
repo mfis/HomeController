@@ -23,6 +23,7 @@ import homecontroller.dao.ModelDAO;
 import homecontroller.database.mapper.BigDecimalRowMapper;
 import homecontroller.database.mapper.TimestampRowMapper;
 import homecontroller.domain.model.HeatingModel;
+import homecontroller.domain.model.Hint;
 import homecontroller.domain.model.HistoryModel;
 import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.Intensity;
@@ -203,13 +204,14 @@ public class HouseService {
 		newModel.setConclusionFacadeMaxTempSunIntensity(lookupIntensity(newModel.getConclusionFacadeMaxTempSunHeating(), 3));
 		newModel.setConclusionFacadeMaxTempHeatingIntensity(lookupIntensity(newModel.getConclusionFacadeSidesDifference(), 1));
 
-		newModel.setConclusionHintKidsRoom(
-				lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff(), 3)));
+		newModel.setConclusionHintKidsRoom(new Hint(
+				lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff(), 3)), "Kinderzimmer"));
 		newModel.setConclusionHintBathRoom(
-				lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff(), 3)));
-		newModel.setConclusionHintBedRoom(lookupHint(newModel.getBedRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff(), 3)));
+				new Hint(lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff(), 3)), "Badezimmer"));
+		newModel.setConclusionHintBedRoom(
+				new Hint(lookupHint(newModel.getBedRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff(), 3)), "Schlafzimmer"));
 		newModel.setConclusionHintLivingRoom(
-				lookupHint(newModel.getLivingRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff(), 3)));
+				new Hint(lookupHint(newModel.getLivingRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff(), 3)), "Wohnzimmer"));
 
 	}
 
