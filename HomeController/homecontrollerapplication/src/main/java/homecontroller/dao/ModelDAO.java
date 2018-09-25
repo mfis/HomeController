@@ -39,7 +39,7 @@ public class ModelDAO {
 	}
 
 	public HouseModel readHouseModel() {
-		if (new Date().getTime() - houseModel.getDateTime() > 1000 * 60 * 3) {
+		if (houseModel == null || new Date().getTime() - houseModel.getDateTime() > 1000 * 60 * 3) {
 			return null; // Too old. Should never happen
 		} else {
 			return houseModel;

@@ -10,7 +10,12 @@ public class Hint implements Serializable {
 
 	private String roomName;
 
+	public Hint() {
+		super();
+	}
+
 	public Hint(String text, String roomName) {
+		super();
 		this.text = text;
 		this.roomName = roomName;
 	}

@@ -1,4 +1,4 @@
-package homecontroller.domain.service;
+package homecontroller.service;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 import homecontroller.domain.model.Hint;
 import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.SettingsModel;
-import homecontroller.service.SettingsService;
 import net.pushover.client.MessagePriority;
 import net.pushover.client.PushoverClient;
 import net.pushover.client.PushoverException;
@@ -33,7 +32,7 @@ public class PushService {
 	@Autowired
 	private SettingsService settingsService;
 
-	private final static String CROSS = "\u274C";
+	// private final static String CROSS = "\u274C";
 
 	private final static Log LOG = LogFactory.getLog(PushService.class);
 
@@ -98,7 +97,7 @@ public class PushService {
 					messages.append("\n");
 				}
 				if (cancelcounter == 0) {
-					messages.append(CROSS + " Aufgehoben:");
+					messages.append("Aufgehoben:");
 				}
 				messages.append("\n- " + oldHints.get(i));
 				cancelcounter++;
@@ -110,8 +109,10 @@ public class PushService {
 
 	private List<String> hintList(HouseModel model) {
 
+		HouseModel m = model != null ? model : new HouseModel();
+
 		List<String> hintStrings = new LinkedList<>();
-		for (Hint hint : model.lookupHints()) {
+		for (Hint hint : m.lookupHints()) {
 			hintStrings.add(hint != null ? hint.formatWithRoomName() : null);
 		}
 		return hintStrings;
@@ -123,7 +124,7 @@ public class PushService {
 		Future<Void> future = executor.submit(new PushoverTask(messages, settingsModel));
 
 		try {
-			System.out.println(future.get(15, TimeUnit.SECONDS));
+			future.get(15, TimeUnit.SECONDS);
 		} catch (TimeoutException | ExecutionException | InterruptedException e) {
 			future.cancel(true);
 			LOG.error("Could not send push message (#3).", e);

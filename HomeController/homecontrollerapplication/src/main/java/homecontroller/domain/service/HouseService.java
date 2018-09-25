@@ -29,14 +29,16 @@ import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.Intensity;
 import homecontroller.domain.model.SwitchModel;
 import homecontroller.service.HomematicAPI;
+import homecontroller.service.PushService;
 
 @Component
 public class HouseService {
 
 	private final static BigDecimal TARGET_TEMPERATURE_INSIDE = new BigDecimal("22");
 
-	private final static BigDecimal SUN_INTENSITY_LOW = new BigDecimal("6");
-	private final static BigDecimal SUN_INTENSITY_MEDIUM = new BigDecimal("13");
+	private final static BigDecimal SUN_INTENSITY_NO = new BigDecimal("3");
+	private final static BigDecimal SUN_INTENSITY_LOW = new BigDecimal("8");
+	private final static BigDecimal SUN_INTENSITY_MEDIUM = new BigDecimal("15");
 
 	private final static BigDecimal HEATING_CONTROL_MODE_BOOST = new BigDecimal(3);
 
@@ -201,17 +203,17 @@ public class HouseService {
 
 		newModel.setConclusionFacadeSidesDifference(newModel.getConclusionFacadeMaxTemp().subtract(newModel.getConclusionFacadeMinTemp()).abs());
 
-		newModel.setConclusionFacadeMaxTempSunIntensity(lookupIntensity(newModel.getConclusionFacadeMaxTempSunHeating(), 3));
-		newModel.setConclusionFacadeMaxTempHeatingIntensity(lookupIntensity(newModel.getConclusionFacadeSidesDifference(), 1));
+		newModel.setConclusionFacadeMaxTempSunIntensity(lookupIntensity(newModel.getConclusionFacadeMaxTempSunHeating()));
+		newModel.setConclusionFacadeMaxTempHeatingIntensity(lookupIntensity(newModel.getConclusionFacadeSidesDifference()));
 
-		newModel.setConclusionHintKidsRoom(new Hint(
-				lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff(), 3)), "Kinderzimmer"));
+		newModel.setConclusionHintKidsRoom(
+				new Hint(lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff())), "Kinderzimmer"));
 		newModel.setConclusionHintBathRoom(
-				new Hint(lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff(), 3)), "Badezimmer"));
+				new Hint(lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff())), "Badezimmer"));
 		newModel.setConclusionHintBedRoom(
-				new Hint(lookupHint(newModel.getBedRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff(), 3)), "Schlafzimmer"));
+				new Hint(lookupHint(newModel.getBedRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff())), "Schlafzimmer"));
 		newModel.setConclusionHintLivingRoom(
-				new Hint(lookupHint(newModel.getLivingRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff(), 3)), "Wohnzimmer"));
+				new Hint(lookupHint(newModel.getLivingRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff())), "Wohnzimmer"));
 
 	}
 
@@ -232,8 +234,8 @@ public class HouseService {
 		return null;
 	}
 
-	private Intensity lookupIntensity(BigDecimal value, int noIntensityGate) {
-		if (value.compareTo(new BigDecimal(noIntensityGate)) < 0) {
+	private Intensity lookupIntensity(BigDecimal value) {
+		if (value.compareTo(SUN_INTENSITY_NO) < 0) {
 			return Intensity.NO;
 		} else if (value.compareTo(SUN_INTENSITY_LOW) < 0) {
 			return Intensity.LOW;
