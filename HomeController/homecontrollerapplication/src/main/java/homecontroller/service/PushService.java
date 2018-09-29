@@ -36,29 +36,34 @@ public class PushService {
 
 	private final static Log LOG = LogFactory.getLog(PushService.class);
 
-	public static void main(String[] args) {
-
-		// TEST
-		long started = System.currentTimeMillis();
-
-		PushService ps = new PushService();
-		ps.settingsService = new SettingsService();
-
-		HouseModel oldModel = new HouseModel();
-		oldModel.setConclusionHintBathRoom(new Hint("Fenster öffnen", "Badezimmer"));
-		oldModel.setConclusionHintLivingRoom(new Hint("Gleich Wohn", "Wohnzimmer"));
-
-		HouseModel newModel = new HouseModel();
-		newModel.setConclusionHintLivingRoom(new Hint("Gleich Wohn", "Wohnzimmer"));
-		newModel.setConclusionHintKidsRoom(new Hint("Fenster öffnen", "Kinderzimmer"));
-		newModel.setConclusionHintBedRoom(new Hint("Rolladen schließen", "Schlafzimmer"));
-
-		ps.send(oldModel, newModel);
-
-		long ended = System.currentTimeMillis();
-		System.out.println("Duration: " + (ended - started) + "ms");
-		// TEST
-	}
+	// public static void main(String[] args) {
+	//
+	// // TEST
+	// long started = System.currentTimeMillis();
+	//
+	// PushService ps = new PushService();
+	// ps.settingsService = new SettingsService();
+	//
+	// HouseModel oldModel = new HouseModel();
+	// oldModel.setConclusionHintBathRoom(new Hint("Fenster öffnen",
+	// "Badezimmer"));
+	// oldModel.setConclusionHintLivingRoom(new Hint("Gleich Wohn",
+	// "Wohnzimmer"));
+	//
+	// HouseModel newModel = new HouseModel();
+	// newModel.setConclusionHintLivingRoom(new Hint("Gleich Wohn",
+	// "Wohnzimmer"));
+	// newModel.setConclusionHintKidsRoom(new Hint("Fenster öffnen",
+	// "Kinderzimmer"));
+	// newModel.setConclusionHintBedRoom(new Hint("Rolladen schließen",
+	// "Schlafzimmer"));
+	//
+	// ps.send(oldModel, newModel);
+	//
+	// long ended = System.currentTimeMillis();
+	// System.out.println("Duration: " + (ended - started) + "ms");
+	// // TEST
+	// }
 
 	public void send(HouseModel oldModel, HouseModel newModel) {
 

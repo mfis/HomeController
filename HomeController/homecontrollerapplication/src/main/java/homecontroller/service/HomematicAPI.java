@@ -30,6 +30,9 @@ public class HomematicAPI {
 	@Autowired
 	private Environment env;
 
+	@Autowired
+	private RestTemplate restTemplate;
+
 	private String host;
 
 	private Map<String, String> currentValues;
@@ -140,11 +143,10 @@ public class HomematicAPI {
 
 	private Document documentFromUrl(String url) {
 
-		RestTemplate rest = new RestTemplate();
 		HttpHeaders headers = createHeaders();
 
 		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
-		ResponseEntity<String> responseEntity = rest.exchange(url, HttpMethod.GET, requestEntity, String.class);
+		ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
 
 		String response = responseEntity.getBody();
 
