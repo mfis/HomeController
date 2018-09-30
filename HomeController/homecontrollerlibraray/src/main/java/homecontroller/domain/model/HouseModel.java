@@ -248,7 +248,8 @@ public class HouseModel implements Serializable {
 		return conclusionFacadeMaxTempHeatingIntensity;
 	}
 
-	public void setConclusionFacadeMaxTempHeatingIntensity(Intensity conclusionFacadeMaxTempHeatingIntensity) {
+	public void setConclusionFacadeMaxTempHeatingIntensity(
+			Intensity conclusionFacadeMaxTempHeatingIntensity) {
 		this.conclusionFacadeMaxTempHeatingIntensity = conclusionFacadeMaxTempHeatingIntensity;
 	}
 

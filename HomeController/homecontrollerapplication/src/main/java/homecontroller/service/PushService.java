@@ -86,7 +86,8 @@ public class PushService {
 
 		int hintcounter = 0;
 		for (int i = 0; i < oldHints.size(); i++) {
-			if (!StringUtils.equals(oldHints.get(i), newHints.get(i)) && StringUtils.isBlank(oldHints.get(i))) {
+			if (!StringUtils.equals(oldHints.get(i), newHints.get(i))
+					&& StringUtils.isBlank(oldHints.get(i))) {
 				if (hintcounter > 0) {
 					messages.append("\n");
 				}
@@ -97,7 +98,8 @@ public class PushService {
 
 		int cancelcounter = 0;
 		for (int i = 0; i < oldHints.size(); i++) {
-			if (!StringUtils.equals(oldHints.get(i), newHints.get(i)) && StringUtils.isBlank(newHints.get(i))) {
+			if (!StringUtils.equals(oldHints.get(i), newHints.get(i))
+					&& StringUtils.isBlank(newHints.get(i))) {
 				if (hintcounter > 0 && cancelcounter == 0) {
 					messages.append("\n");
 				}
@@ -154,13 +156,14 @@ public class PushService {
 			PushoverClient client = new PushoverRestClient();
 
 			try {
-				Status result = client.pushMessage(PushoverMessage.builderWithApiToken(settingsModel.getPushoverApiToken()) //
-						.setUserId(settingsModel.getPushoverUserId()) //
-						.setDevice(settingsModel.getPushoverDevice()) //
-						.setMessage(messages) //
-						.setPriority(MessagePriority.NORMAL) //
-						.setTitle("Zuhause - Empfehlungen") //
-						.build()); //
+				Status result = client
+						.pushMessage(PushoverMessage.builderWithApiToken(settingsModel.getPushoverApiToken()) //
+								.setUserId(settingsModel.getPushoverUserId()) //
+								.setDevice(settingsModel.getPushoverDevice()) //
+								.setMessage(messages) //
+								.setPriority(MessagePriority.NORMAL) //
+								.setTitle("Zuhause - Empfehlungen") //
+								.build()); //
 
 				if (result.getStatus() != 1) {
 					LOG.error("Could not send push message (#1):" + result.toString());

@@ -92,11 +92,12 @@ public class HouseService {
 
 		HistoryModel newModel = new HistoryModel();
 		List<Timestamp> timestamps = jdbcTemplate.query(
-				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER group by month order by month asc;", new Object[] {},
-				new TimestampRowMapper("last"));
+				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER group by month order by month asc;",
+				new Object[] {}, new TimestampRowMapper("last"));
 		for (Timestamp timestamp : timestamps) {
-			BigDecimal value = jdbcTemplate.queryForObject("select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;", new Object[] { timestamp },
-					new BigDecimalRowMapper("value"));
+			BigDecimal value = jdbcTemplate.queryForObject(
+					"select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;",
+					new Object[] { timestamp }, new BigDecimalRowMapper("value"));
 			newModel.getMonthlyPowerConsumption().put(timestamp.getTime(), value);
 		}
 		ModelDAO.getInstance().write(newModel);
@@ -115,10 +116,13 @@ public class HouseService {
 			return;
 		}
 
-		Timestamp timestamp = jdbcTemplate.queryForObject("select max(ts) as time from D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER;", new TimestampRowMapper("time"));
+		Timestamp timestamp = jdbcTemplate.queryForObject(
+				"select max(ts) as time from D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER;",
+				new TimestampRowMapper("time"));
 
 		Entry<Long, BigDecimal> lastElement = null;
-		LinkedHashMap<Long, BigDecimal> map = (LinkedHashMap<Long, BigDecimal>) model.getMonthlyPowerConsumption();
+		LinkedHashMap<Long, BigDecimal> map = (LinkedHashMap<Long, BigDecimal>) model
+				.getMonthlyPowerConsumption();
 		Iterator<Entry<Long, BigDecimal>> iterator = map.entrySet().iterator();
 		HashMap<Long, BigDecimal> newMap = new LinkedHashMap<Long, BigDecimal>();
 		while (iterator.hasNext()) {
@@ -128,9 +132,11 @@ public class HouseService {
 			}
 		}
 
-		if (timestamp.getTime() > lastElement.getKey() && isSameMonth(timestamp, new Date(lastElement.getKey()))) {
-			BigDecimal value = jdbcTemplate.queryForObject("select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;", new Object[] { timestamp },
-					new BigDecimalRowMapper("value"));
+		if (timestamp.getTime() > lastElement.getKey()
+				&& isSameMonth(timestamp, new Date(lastElement.getKey()))) {
+			BigDecimal value = jdbcTemplate.queryForObject(
+					"select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;",
+					new Object[] { timestamp }, new BigDecimalRowMapper("value"));
 			newMap.put(timestamp.getTime(), value);
 			model.setMonthlyPowerConsumption(newMap);
 		}
@@ -147,7 +153,9 @@ public class HouseService {
 			return false;
 		}
 
-		return cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA) && cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
+		return cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA)
+				&& cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
+				&& cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
 	}
 
 	private HouseModel refreshModel() {
@@ -201,33 +209,43 @@ public class HouseService {
 			newModel.setConclusionFacadeMaxTempSunHeating(newModel.getTerraceSunHeatingDiff());
 		}
 
-		newModel.setConclusionFacadeSidesDifference(newModel.getConclusionFacadeMaxTemp().subtract(newModel.getConclusionFacadeMinTemp()).abs());
+		newModel.setConclusionFacadeSidesDifference(
+				newModel.getConclusionFacadeMaxTemp().subtract(newModel.getConclusionFacadeMinTemp()).abs());
 
-		newModel.setConclusionFacadeMaxTempSunIntensity(lookupIntensity(newModel.getConclusionFacadeMaxTempSunHeating()));
-		newModel.setConclusionFacadeMaxTempHeatingIntensity(lookupIntensity(newModel.getConclusionFacadeSidesDifference()));
+		newModel.setConclusionFacadeMaxTempSunIntensity(
+				lookupIntensity(newModel.getConclusionFacadeMaxTempSunHeating()));
+		newModel.setConclusionFacadeMaxTempHeatingIntensity(
+				lookupIntensity(newModel.getConclusionFacadeSidesDifference()));
 
 		newModel.setConclusionHintKidsRoom(
-				new Hint(lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff())), "Kinderzimmer"));
+				new Hint(lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(),
+						lookupIntensity(newModel.getEntranceSunHeatingDiff())), "Kinderzimmer"));
 		newModel.setConclusionHintBathRoom(
-				new Hint(lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(), lookupIntensity(newModel.getEntranceSunHeatingDiff())), "Badezimmer"));
+				new Hint(lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(),
+						lookupIntensity(newModel.getEntranceSunHeatingDiff())), "Badezimmer"));
 		newModel.setConclusionHintBedRoom(
-				new Hint(lookupHint(newModel.getBedRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff())), "Schlafzimmer"));
+				new Hint(lookupHint(newModel.getBedRoomTemperature(), newModel.getTerraceTemperature(),
+						lookupIntensity(newModel.getTerraceSunHeatingDiff())), "Schlafzimmer"));
 		newModel.setConclusionHintLivingRoom(
-				new Hint(lookupHint(newModel.getLivingRoomTemperature(), newModel.getTerraceTemperature(), lookupIntensity(newModel.getTerraceSunHeatingDiff())), "Wohnzimmer"));
+				new Hint(lookupHint(newModel.getLivingRoomTemperature(), newModel.getTerraceTemperature(),
+						lookupIntensity(newModel.getTerraceSunHeatingDiff())), "Wohnzimmer"));
 
 	}
 
-	private String lookupHint(BigDecimal insideTemperature, BigDecimal outsideTemperature, Intensity sunIntensity) {
+	private String lookupHint(BigDecimal insideTemperature, BigDecimal outsideTemperature,
+			Intensity sunIntensity) {
 
 		if (insideTemperature == null) {
 			return null;
 		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) < 0) {
 			// TODO: using sun heating in the winter for warming up rooms
 			return null;
-		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0 && outsideTemperature.compareTo(insideTemperature) < 0
+		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0
+				&& outsideTemperature.compareTo(insideTemperature) < 0
 				&& sunIntensity.ordinal() <= Intensity.LOW.ordinal()) {
 			return "Fenster öffnen";
-		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0 && sunIntensity.ordinal() > Intensity.LOW.ordinal()) {
+		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0
+				&& sunIntensity.ordinal() > Intensity.LOW.ordinal()) {
 			return "Rolladen schließen";
 		}
 
@@ -283,7 +301,8 @@ public class HouseService {
 
 	private HeatingModel readHeating(String device, String chanel, String programNamePrefix) {
 		HeatingModel model = new HeatingModel();
-		model.setBoostActive(api.getAsBigDecimal(device + ":" + chanel + ".CONTROL_MODE").compareTo(HEATING_CONTROL_MODE_BOOST) == 0);
+		model.setBoostActive(api.getAsBigDecimal(device + ":" + chanel + ".CONTROL_MODE")
+				.compareTo(HEATING_CONTROL_MODE_BOOST) == 0);
 		model.setBoostMinutesLeft(api.getAsBigDecimal(device + ":" + chanel + ".BOOST_STATE").intValue());
 		model.setTargetTemperature(api.getAsBigDecimal(device + ":" + chanel + ".SET_TEMPERATURE"));
 		model.setProgramNamePrefix(programNamePrefix);

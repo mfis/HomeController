@@ -38,7 +38,8 @@ public class SettingsService {
 
 	public void togglePush(String user) {
 
-		boolean state = Boolean.parseBoolean(StringUtils.trimToEmpty(ExternalPropertiesDAO.getInstance().read(user + PUSH_ACTIVE)));
+		boolean state = Boolean.parseBoolean(
+				StringUtils.trimToEmpty(ExternalPropertiesDAO.getInstance().read(user + PUSH_ACTIVE)));
 		ExternalPropertiesDAO.getInstance().write(user + PUSH_ACTIVE, Boolean.toString(!state).toString());
 	}
 

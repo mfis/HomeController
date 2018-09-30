@@ -78,7 +78,8 @@ public class HomematicAPI {
 		changeValue("refreshadress", env.getProperty("refresh.adress"));
 
 		String iseID = currentStateIDs.get(key);
-		String url = host + "/addons/xmlapi/statechange.cgi?ise_id=" + iseID + "&new_value=" + Boolean.toString(!getAsBoolean(key));
+		String url = host + "/addons/xmlapi/statechange.cgi?ise_id=" + iseID + "&new_value="
+				+ Boolean.toString(!getAsBoolean(key));
 		documentFromUrl(url);
 	}
 
@@ -104,7 +105,8 @@ public class HomematicAPI {
 			if (eElement.getAttribute("value") != null && eElement.getAttribute("value").length() > 0) {
 				currentValues.put(eElement.getAttribute("name"), eElement.getAttribute("value"));
 			}
-			if (eElement.getAttribute("type") != null && eElement.getAttribute("type").equalsIgnoreCase("STATE")) {
+			if (eElement.getAttribute("type") != null
+					&& eElement.getAttribute("type").equalsIgnoreCase("STATE")) {
 				currentStateIDs.put(eElement.getAttribute("name"), eElement.getAttribute("ise_id"));
 			}
 		}
@@ -146,7 +148,8 @@ public class HomematicAPI {
 		HttpHeaders headers = createHeaders();
 
 		HttpEntity<String> requestEntity = new HttpEntity<String>("", headers);
-		ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
+		ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.GET, requestEntity,
+				String.class);
 
 		String response = responseEntity.getBody();
 
