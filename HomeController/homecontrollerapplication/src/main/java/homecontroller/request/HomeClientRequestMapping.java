@@ -63,11 +63,10 @@ public class HomeClientRequestMapping {
 		return new ActionModel("OK");
 	}
 
-	@PostMapping("/controller/settingspushover")
+	@PostMapping("/controller/settingpushoverdevice")
 	public ActionModel settingspushover(@RequestParam("user") String user,
-			@RequestParam("token") String token, @RequestParam("userid") String userid,
 			@RequestParam("device") String device) throws Exception {
-		settingsService.setupPush(user, token, userid, device);
+		settingsService.setupPushDevice(user, device);
 		return new ActionModel("OK");
 	}
 }
