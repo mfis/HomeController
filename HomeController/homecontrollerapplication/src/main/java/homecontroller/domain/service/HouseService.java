@@ -132,13 +132,16 @@ public class HouseService {
 			}
 		}
 
-		if (timestamp.getTime() > lastElement.getKey()
-				&& isSameMonth(timestamp, new Date(lastElement.getKey()))) {
+		if (timestamp.getTime() > lastElement.getKey()) {
 			BigDecimal value = jdbcTemplate.queryForObject(
 					"select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;",
 					new Object[] { timestamp }, new BigDecimalRowMapper("value"));
-			newMap.put(timestamp.getTime(), value);
-			model.setMonthlyPowerConsumption(newMap);
+			if (isSameMonth(timestamp, new Date(lastElement.getKey()))) {
+				newMap.put(timestamp.getTime(), value);
+				model.setMonthlyPowerConsumption(newMap);
+			} else {
+				model.getMonthlyPowerConsumption().put(timestamp.getTime(), value);
+			}
 		}
 	}
 
@@ -185,6 +188,8 @@ public class HouseService {
 		newModel.setKitchenWindowLightSwitch(readSwitchState("BidCos-RF.OEQ0712456", "1"));
 
 		newModel.setHouseElectricalPowerConsumption(readPowerConsumption("BidCos-RF.NEQ0861520", "1"));
+
+		checkLowBattery(newModel, "Thermostad Badezimmer", "BidCos-RF.OEQ0854602", "0");
 
 		return newModel;
 	}
@@ -319,5 +324,13 @@ public class HouseService {
 
 	private int readPowerConsumption(String device, String chanel) {
 		return api.getAsBigDecimal(device + ":" + chanel + ".POWER").intValue();
+	}
+
+	private void checkLowBattery(HouseModel model, String name, String device, String chanel) {
+		Boolean state = api.getAsBoolean(device + ":" + chanel + ".LOWBAT");
+		if (state != null && state == false) {
+			model.getLowBatteryDevices().add(name);
+		}
+
 	}
 }

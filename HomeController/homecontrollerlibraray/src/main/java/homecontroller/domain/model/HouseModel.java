@@ -41,6 +41,8 @@ public class HouseModel implements Serializable {
 
 	private int houseElectricalPowerConsumption;
 
+	private List<String> lowBatteryDevices;
+
 	// ----------
 
 	private BigDecimal conclusionFacadeMinTemp;
@@ -74,6 +76,7 @@ public class HouseModel implements Serializable {
 	public HouseModel() {
 		super();
 		dateTime = new Date().getTime();
+		lowBatteryDevices = new LinkedList<>();
 	}
 
 	public List<Hint> lookupHints() {
@@ -303,5 +306,13 @@ public class HouseModel implements Serializable {
 
 	public void setKitchenWindowLightSwitch(SwitchModel kitchenWindowLightSwitch) {
 		this.kitchenWindowLightSwitch = kitchenWindowLightSwitch;
+	}
+
+	public List<String> getLowBatteryDevices() {
+		return lowBatteryDevices;
+	}
+
+	public void setLowBatteryDevices(List<String> lowBatteryDevices) {
+		this.lowBatteryDevices = lowBatteryDevices;
 	}
 }
