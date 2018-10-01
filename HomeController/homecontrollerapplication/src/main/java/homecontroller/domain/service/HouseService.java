@@ -189,7 +189,13 @@ public class HouseService {
 
 		newModel.setHouseElectricalPowerConsumption(readPowerConsumption("BidCos-RF.NEQ0861520", "1"));
 
-		checkLowBattery(newModel, "Thermostad Badezimmer", "BidCos-RF.OEQ0854602", "0");
+		checkLowBattery(newModel, "Thermostat Badezimmer", "BidCos-RF.OEQ0854602", "0");
+		checkLowBattery(newModel, "Thermometer Schlafzimmer", "HmIP-RF.000E97099314C4", "0");
+		checkLowBattery(newModel, "Thermometer Kinderzimmer", "HmIP-RF.000E97099314A3", "0");
+		checkLowBattery(newModel, "Thermometer Wohnzimmer", "HmIP-RF.000E97099312D5", "0");
+		checkLowBattery(newModel, "Thermometer Einfahrt", "BidCos-RF.OEQ0801807", "0");
+		checkLowBattery(newModel, "Thermometer Terrasse", "BidCos-RF.OEQ0801741", "0");
+		checkLowBattery(newModel, "Stromzähler", "BidCos-RF.NEQ0861520", "0");
 
 		return newModel;
 	}
@@ -327,8 +333,11 @@ public class HouseService {
 	}
 
 	private void checkLowBattery(HouseModel model, String name, String device, String chanel) {
-		Boolean state = api.getAsBoolean(device + ":" + chanel + ".LOWBAT");
-		if (state != null && state == false) {
+		Boolean state = api.getAsBoolean(device + ":" + chanel + ".LOWBAT"); // BID-COS
+		if (state == null) {
+			state = api.getAsBoolean(device + ":" + chanel + ".LOW_BAT"); // HM-IP
+		}
+		if (state != null && state == true) {
 			model.getLowBatteryDevices().add(name);
 		}
 
