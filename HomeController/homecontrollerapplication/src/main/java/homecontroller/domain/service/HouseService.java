@@ -229,22 +229,25 @@ public class HouseService {
 				lookupIntensity(newModel.getConclusionFacadeSidesDifference()));
 
 		newModel.setConclusionHintKidsRoom(
-				new Hint(lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(),
-						lookupIntensity(newModel.getEntranceSunHeatingDiff())), "Kinderzimmer"));
-		newModel.setConclusionHintBathRoom(
-				new Hint(lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(),
-						lookupIntensity(newModel.getEntranceSunHeatingDiff())), "Badezimmer"));
+				new Hint(
+						lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(),
+								lookupIntensity(newModel.getEntranceSunHeatingDiff()), null),
+						"Kinderzimmer"));
+		newModel.setConclusionHintBathRoom(new Hint(
+				lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(),
+						lookupIntensity(newModel.getEntranceSunHeatingDiff()), newModel.getBathRoomHeating()),
+				"Badezimmer"));
 		newModel.setConclusionHintBedRoom(
 				new Hint(lookupHint(newModel.getBedRoomTemperature(), newModel.getTerraceTemperature(),
-						lookupIntensity(newModel.getTerraceSunHeatingDiff())), "Schlafzimmer"));
+						lookupIntensity(newModel.getTerraceSunHeatingDiff()), null), "Schlafzimmer"));
 		newModel.setConclusionHintLivingRoom(
 				new Hint(lookupHint(newModel.getLivingRoomTemperature(), newModel.getTerraceTemperature(),
-						lookupIntensity(newModel.getTerraceSunHeatingDiff())), "Wohnzimmer"));
+						lookupIntensity(newModel.getTerraceSunHeatingDiff()), null), "Wohnzimmer"));
 
 	}
 
 	private String lookupHint(BigDecimal insideTemperature, BigDecimal outsideTemperature,
-			Intensity sunIntensity) {
+			Intensity sunIntensity, HeatingModel heating) {
 
 		if (insideTemperature == null) {
 			return null;
@@ -254,7 +257,12 @@ public class HouseService {
 		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0
 				&& outsideTemperature.compareTo(insideTemperature) < 0
 				&& sunIntensity.ordinal() <= Intensity.LOW.ordinal()) {
-			return "Fenster öffnen";
+			if (heating != null && (heating.isBoostActive()
+					|| heating.getTargetTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0)) {
+				return null;
+			} else {
+				return "Fenster öffnen";
+			}
 		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0
 				&& sunIntensity.ordinal() > Intensity.LOW.ordinal()) {
 			return "Rolladen schließen";
