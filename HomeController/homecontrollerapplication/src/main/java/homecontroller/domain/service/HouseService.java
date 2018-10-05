@@ -249,6 +249,9 @@ public class HouseService {
 	private String lookupHint(BigDecimal insideTemperature, BigDecimal outsideTemperature,
 			Intensity sunIntensity, HeatingModel heating) {
 
+		// SELECT max(ts) FROM D_BIDCOS_RF_OEQ0854602_4_CONTROL_MODE where value
+		// = 3;
+
 		if (insideTemperature == null) {
 			return null;
 		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) < 0) {
