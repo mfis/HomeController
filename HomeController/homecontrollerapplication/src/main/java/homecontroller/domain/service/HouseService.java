@@ -22,6 +22,8 @@ import org.springframework.stereotype.Component;
 import homecontroller.dao.ModelDAO;
 import homecontroller.database.mapper.BigDecimalRowMapper;
 import homecontroller.database.mapper.TimestampRowMapper;
+import homecontroller.domain.model.Datapoint;
+import homecontroller.domain.model.Device;
 import homecontroller.domain.model.HeatingModel;
 import homecontroller.domain.model.Hint;
 import homecontroller.domain.model.HistoryModel;
@@ -92,11 +94,13 @@ public class HouseService {
 
 		HistoryModel newModel = new HistoryModel();
 		List<Timestamp> timestamps = jdbcTemplate.query(
-				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER group by month order by month asc;",
+				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM "
+						+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER)
+						+ " group by month order by month asc;",
 				new Object[] {}, new TimestampRowMapper("last"));
 		for (Timestamp timestamp : timestamps) {
-			BigDecimal value = jdbcTemplate.queryForObject(
-					"select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;",
+			BigDecimal value = jdbcTemplate.queryForObject("select value FROM "
+					+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER) + " where ts = ?;",
 					new Object[] { timestamp }, new BigDecimalRowMapper("value"));
 			newModel.getMonthlyPowerConsumption().put(timestamp.getTime(), value);
 		}
@@ -117,7 +121,8 @@ public class HouseService {
 		}
 
 		Timestamp timestamp = jdbcTemplate.queryForObject(
-				"select max(ts) as time from D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER;",
+				"select max(ts) as time from "
+						+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER) + ";",
 				new TimestampRowMapper("time"));
 
 		Entry<Long, BigDecimal> lastElement = null;
@@ -133,8 +138,8 @@ public class HouseService {
 		}
 
 		if (timestamp.getTime() > lastElement.getKey()) {
-			BigDecimal value = jdbcTemplate.queryForObject(
-					"select value FROM D_BIDCOS_RF_NEQ0861520_1_ENERGY_COUNTER where ts = ?;",
+			BigDecimal value = jdbcTemplate.queryForObject("select value FROM "
+					+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER) + " where ts = ?;",
 					new Object[] { timestamp }, new BigDecimalRowMapper("value"));
 			if (isSameMonth(timestamp, new Date(lastElement.getKey()))) {
 				newMap.put(timestamp.getTime(), value);
@@ -167,35 +172,35 @@ public class HouseService {
 
 		HouseModel newModel = new HouseModel();
 
-		newModel.setBathRoomTemperature(readActTemperature("BidCos-RF.OEQ0854602", "4"));
-		newModel.setBathRoomHeating(readHeating("BidCos-RF.OEQ0854602", "4", "ThermostatBad"));
+		newModel.setBathRoomTemperature(readActTemperature(Device.THERMOSTAT_BAD));
+		newModel.setBathRoomHeating(readHeating(Device.THERMOSTAT_BAD));
 
-		newModel.setKidsRoomTemperature(readActTemperature("HmIP-RF.000E97099314A3", "1"));
-		newModel.setKidsRoomHumidity(readHumidity("HmIP-RF.000E97099314A3", "1"));
+		newModel.setKidsRoomTemperature(readActTemperature(Device.THERMOMETER_KINDERZIMMER));
+		newModel.setKidsRoomHumidity(readHumidity(Device.THERMOMETER_KINDERZIMMER));
 
-		newModel.setLivingRoomTemperature(readActTemperature("HmIP-RF.000E97099312D5", "1"));
-		newModel.setLivingRoomHumidity(readHumidity("HmIP-RF.000E97099312D5", "1"));
+		newModel.setLivingRoomTemperature(readActTemperature(Device.THERMOMETER_WOHNZIMMER));
+		newModel.setLivingRoomHumidity(readHumidity(Device.THERMOMETER_WOHNZIMMER));
 
-		newModel.setBedRoomTemperature(readActTemperature("HmIP-RF.000E97099314C4", "1"));
-		newModel.setBedRoomHumidity(readHumidity("HmIP-RF.000E97099314C4", "1"));
+		newModel.setBedRoomTemperature(readActTemperature(Device.THERMOMETER_SCHLAFZIMMER));
+		newModel.setBedRoomHumidity(readHumidity(Device.THERMOMETER_SCHLAFZIMMER));
 
-		newModel.setTerraceTemperature(readTemperature("BidCos-RF.OEQ0801741", "2"));
-		newModel.setTerraceSunHeatingDiff(readTemperature("BidCos-RF.OEQ0801741", "3"));
+		newModel.setTerraceTemperature(readTemperature(Device.DIFFERENZTEMPERATUR_TERRASSE_AUSSEN));
+		newModel.setTerraceSunHeatingDiff(readTemperature(Device.DIFFERENZTEMPERATUR_TERRASSE_DIFF));
 
-		newModel.setEntranceTemperature(readTemperature("BidCos-RF.OEQ0801807", "2"));
-		newModel.setEntranceSunHeatingDiff(readTemperature("BidCos-RF.OEQ0801807", "3"));
+		newModel.setEntranceTemperature(readTemperature(Device.DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN));
+		newModel.setEntranceSunHeatingDiff(readTemperature(Device.DIFFERENZTEMPERATUR_EINFAHRT_DIFF));
 
-		newModel.setKitchenWindowLightSwitch(readSwitchState("BidCos-RF.OEQ0712456", "1"));
+		newModel.setKitchenWindowLightSwitch(readSwitchState(Device.SCHALTER_KUECHE_LICHT));
 
-		newModel.setHouseElectricalPowerConsumption(readPowerConsumption("BidCos-RF.NEQ0861520", "1"));
+		newModel.setHouseElectricalPowerConsumption(readPowerConsumption(Device.STROMZAEHLER));
 
-		checkLowBattery(newModel, "Thermostat Badezimmer", "BidCos-RF.OEQ0854602", "0");
-		checkLowBattery(newModel, "Thermometer Schlafzimmer", "HmIP-RF.000E97099314C4", "0");
-		checkLowBattery(newModel, "Thermometer Kinderzimmer", "HmIP-RF.000E97099314A3", "0");
-		checkLowBattery(newModel, "Thermometer Wohnzimmer", "HmIP-RF.000E97099312D5", "0");
-		checkLowBattery(newModel, "Thermometer Einfahrt", "BidCos-RF.OEQ0801807", "0");
-		checkLowBattery(newModel, "Thermometer Terrasse", "BidCos-RF.OEQ0801741", "0");
-		checkLowBattery(newModel, "Stromzähler", "BidCos-RF.NEQ0861520", "0");
+		checkLowBattery(newModel, Device.THERMOSTAT_BAD);
+		checkLowBattery(newModel, Device.THERMOMETER_SCHLAFZIMMER);
+		checkLowBattery(newModel, Device.THERMOMETER_KINDERZIMMER);
+		checkLowBattery(newModel, Device.THERMOMETER_WOHNZIMMER);
+		checkLowBattery(newModel, Device.DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN);
+		checkLowBattery(newModel, Device.DIFFERENZTEMPERATUR_TERRASSE_AUSSEN);
+		checkLowBattery(newModel, Device.STROMZAEHLER);
 
 		return newModel;
 	}
@@ -309,48 +314,53 @@ public class HouseService {
 		}
 	}
 
-	private BigDecimal readTemperature(String device, String chanel) {
-		return api.getAsBigDecimal(device + ":" + chanel + ".TEMPERATURE");
+	private BigDecimal readTemperature(Device device) {
+		return api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.TEMPERATURE));
 	}
 
-	private BigDecimal readActTemperature(String device, String chanel) {
-		return api.getAsBigDecimal(device + ":" + chanel + ".ACTUAL_TEMPERATURE");
+	private BigDecimal readActTemperature(Device device) {
+		return api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.ACTUAL_TEMPERATURE));
 	}
 
-	private BigDecimal readHumidity(String device, String chanel) {
-		return api.getAsBigDecimal(device + ":" + chanel + ".HUMIDITY");
+	private BigDecimal readHumidity(Device device) {
+		return api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.HUMIDITY));
 	}
 
-	private HeatingModel readHeating(String device, String chanel, String programNamePrefix) {
+	private HeatingModel readHeating(Device device) {
 		HeatingModel model = new HeatingModel();
-		model.setBoostActive(api.getAsBigDecimal(device + ":" + chanel + ".CONTROL_MODE")
+		model.setBoostActive(api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.CONTROL_MODE))
 				.compareTo(HEATING_CONTROL_MODE_BOOST) == 0);
-		model.setBoostMinutesLeft(api.getAsBigDecimal(device + ":" + chanel + ".BOOST_STATE").intValue());
-		model.setTargetTemperature(api.getAsBigDecimal(device + ":" + chanel + ".SET_TEMPERATURE"));
-		model.setProgramNamePrefix(programNamePrefix);
+		model.setBoostMinutesLeft(
+				api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.BOOST_STATE)).intValue());
+		model.setTargetTemperature(api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.SET_TEMPERATURE)));
+		model.setProgramNamePrefix(device.programNamePrefix());
 		return model;
 	}
 
-	private SwitchModel readSwitchState(String device, String chanel) {
+	private SwitchModel readSwitchState(Device device) {
 		SwitchModel switchModel = new SwitchModel();
-		String devIdVar = device + ":" + chanel + ".STATE";
-		switchModel.setState(api.getAsBoolean(devIdVar));
-		switchModel.setDeviceIdVar(devIdVar);
+		switchModel.setState(api.getAsBoolean(device.accessKeyXmlApi(Datapoint.STATE)));
+		switchModel.setDeviceIdVar(device.accessKeyXmlApi(Datapoint.STATE));
 		return switchModel;
 	}
 
-	private int readPowerConsumption(String device, String chanel) {
-		return api.getAsBigDecimal(device + ":" + chanel + ".POWER").intValue();
+	private int readPowerConsumption(Device device) {
+		return api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.POWER)).intValue();
 	}
 
-	private void checkLowBattery(HouseModel model, String name, String device, String chanel) {
-		Boolean state = api.getAsBoolean(device + ":" + chanel + ".LOWBAT"); // BID-COS
-		if (state == null) {
-			state = api.getAsBoolean(device + ":" + chanel + ".LOW_BAT"); // HM-IP
-		}
-		if (state != null && state == true) {
-			model.getLowBatteryDevices().add(name);
+	private void checkLowBattery(HouseModel model, Device device) {
+
+		Boolean state = null;
+		if (device.isHomematic()) {
+			state = api.getAsBoolean(device.accessMainDeviceKeyXmlApi(Datapoint.LOWBAT));
+		} else if (device.isHomematicIP()) {
+			state = api.getAsBoolean(device.accessMainDeviceKeyXmlApi(Datapoint.LOW_BAT));
 		}
 
+		if (state == null) {
+			LogFactory.getLog(HouseService.class).error("Error reading Battery state: " + device.name());
+		} else if (state == true) {
+			model.getLowBatteryDevices().add(device.getDescription());
+		}
 	}
 }
