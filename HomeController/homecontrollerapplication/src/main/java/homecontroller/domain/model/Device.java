@@ -27,6 +27,7 @@ public enum Device {
 	private Device(Protocol protocol, String id, int channel, String description) {
 		this.protocol = protocol;
 		this.id = id;
+		this.channel = channel;
 		this.description = description;
 	}
 
