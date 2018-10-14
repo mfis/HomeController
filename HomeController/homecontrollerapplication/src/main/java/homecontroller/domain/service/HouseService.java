@@ -223,9 +223,6 @@ public class HouseService {
 
 	private void lookupHint(RoomClimate room, OutdoorClimate outdoor) {
 
-		// SELECT max(ts) FROM D_BIDCOS_RF_OEQ0854602_4_CONTROL_MODE where value
-		// = 3;
-
 		if (room.getTemperature() == null) {
 			return;
 		} else if (room.getTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) < 0) {
