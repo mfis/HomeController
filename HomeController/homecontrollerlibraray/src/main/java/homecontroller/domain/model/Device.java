@@ -1,7 +1,5 @@
 package homecontroller.domain.model;
 
-import org.apache.commons.lang3.StringUtils;
-
 public enum Device {
 
 	THERMOSTAT_BAD(Protocol.HM, "OEQ0854602", 4, "Thermostat", "Bad"), //
@@ -49,7 +47,7 @@ public enum Device {
 	}
 
 	public String programNamePrefix() {
-		return StringUtils.remove(getDescription(), StringUtils.SPACE);
+		return getDescription().replaceAll(" ", "");
 	}
 
 	public boolean isHomematic() {

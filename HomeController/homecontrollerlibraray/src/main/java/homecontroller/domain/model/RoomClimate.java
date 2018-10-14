@@ -10,6 +10,8 @@ public class RoomClimate extends Climate implements Serializable {
 
 	private Hint hint;
 
+	private Device deviceHeating;
+
 	public HeatingModel getHeating() {
 		return heating;
 	}
@@ -24,5 +26,13 @@ public class RoomClimate extends Climate implements Serializable {
 
 	public void setHint(Hint hint) {
 		this.hint = hint;
+	}
+
+	public Device getDeviceHeating() {
+		return deviceHeating;
+	}
+
+	public void setDeviceHeating(Device deviceHeating) {
+		this.deviceHeating = deviceHeating;
 	}
 }

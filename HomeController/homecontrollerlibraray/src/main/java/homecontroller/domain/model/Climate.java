@@ -13,6 +13,8 @@ public class Climate implements Serializable {
 
 	private String placeName;
 
+	private Device deviceThermometer;
+
 	public BigDecimal getTemperature() {
 		return temperature;
 	}
@@ -35,6 +37,14 @@ public class Climate implements Serializable {
 
 	public void setPlaceName(String placeName) {
 		this.placeName = placeName;
+	}
+
+	public Device getDeviceThermometer() {
+		return deviceThermometer;
+	}
+
+	public void setDeviceThermometer(Device deviceThermometer) {
+		this.deviceThermometer = deviceThermometer;
 	}
 
 }

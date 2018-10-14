@@ -2,6 +2,8 @@ package homecontroller.domain.service;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -45,6 +47,7 @@ public class HouseService {
 	private final static BigDecimal SUN_INTENSITY_MEDIUM = new BigDecimal("15");
 
 	private final static BigDecimal HEATING_CONTROL_MODE_BOOST = new BigDecimal(3);
+	private final static long HINT_TIMEOUT_MINUTES_AFTER_BOOST = 90L;
 
 	private final static Object REFRESH_MONITOR = new Object();
 	private final static long REFRESH_TIMEOUT = 5 * 1000; // 5 sec
@@ -232,7 +235,8 @@ public class HouseService {
 				&& outdoor.getTemperature().compareTo(room.getTemperature()) < 0
 				&& outdoor.getSunBeamIntensity().ordinal() <= Intensity.LOW.ordinal()) {
 			if (room.getHeating() != null && (room.getHeating().isBoostActive()
-					|| room.getHeating().getTargetTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0)) {
+					|| room.getHeating().getTargetTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0
+					|| minutesSinceLastHeatingBoost(room) < HINT_TIMEOUT_MINUTES_AFTER_BOOST)) {
 				return;
 			} else {
 				room.setHint(new Hint("Fenster öffnen"));
@@ -243,6 +247,15 @@ public class HouseService {
 		}
 
 		return;
+	}
+
+	private long minutesSinceLastHeatingBoost(RoomClimate room) {
+		Timestamp timestamp = jdbcTemplate.queryForObject("select max(ts) as time FROM "
+				+ room.getDeviceHeating().accessKeyHistorian(Datapoint.CONTROL_MODE) + " where value = ?;",
+				new Object[] { HEATING_CONTROL_MODE_BOOST.intValue() }, new TimestampRowMapper("time"));
+
+		Duration timeElapsed = Duration.between(Instant.ofEpochMilli(timestamp.getTime()), Instant.now());
+		return timeElapsed.toMinutes();
 	}
 
 	private Intensity lookupIntensity(BigDecimal value) {
@@ -286,6 +299,7 @@ public class HouseService {
 		outdoorClimate.setSunBeamIntensity(
 				lookupIntensity(api.getAsBigDecimal(diff.accessKeyXmlApi(Datapoint.TEMPERATURE))));
 		outdoorClimate.setPlaceName(outside.getPlaceName());
+		outdoorClimate.setDeviceThermometer(outside);
 		return outdoorClimate;
 	}
 
@@ -295,6 +309,7 @@ public class HouseService {
 				api.getAsBigDecimal(thermometer.accessKeyXmlApi(Datapoint.ACTUAL_TEMPERATURE)));
 		roomClimate.setHumidity(api.getAsBigDecimal(thermometer.accessKeyXmlApi(Datapoint.HUMIDITY)));
 		roomClimate.setPlaceName(thermometer.getPlaceName());
+		roomClimate.setDeviceThermometer(thermometer);
 		return roomClimate;
 	}
 
@@ -310,6 +325,7 @@ public class HouseService {
 		heatingModel.setProgramNamePrefix(heating.programNamePrefix());
 		roomClimate.setHeating(heatingModel);
 		roomClimate.setPlaceName(thermometer.getPlaceName());
+		roomClimate.setDeviceHeating(heating);
 
 		return roomClimate;
 	}
