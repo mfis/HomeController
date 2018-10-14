@@ -16,8 +16,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import homecontroller.domain.model.Hint;
 import homecontroller.domain.model.HouseModel;
+import homecontroller.domain.model.RoomClimate;
 import homecontroller.domain.model.SettingsModel;
 import net.pushover.client.MessagePriority;
 import net.pushover.client.PushoverClient;
@@ -119,8 +119,8 @@ public class PushService {
 		HouseModel m = model != null ? model : new HouseModel();
 
 		List<String> hintStrings = new LinkedList<>();
-		for (Hint hint : m.lookupHints()) {
-			hintStrings.add(hint != null ? hint.formatWithRoomName() : null);
+		for (RoomClimate room : m.lookupRooms()) {
+			hintStrings.add(room.getHint() != null ? room.getHint().formatWithRoomName(room) : null);
 		}
 		return hintStrings;
 	}

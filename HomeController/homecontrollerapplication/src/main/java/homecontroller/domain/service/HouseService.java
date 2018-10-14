@@ -29,6 +29,8 @@ import homecontroller.domain.model.Hint;
 import homecontroller.domain.model.HistoryModel;
 import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.Intensity;
+import homecontroller.domain.model.OutdoorClimate;
+import homecontroller.domain.model.RoomClimate;
 import homecontroller.domain.model.SwitchModel;
 import homecontroller.service.HomematicAPI;
 import homecontroller.service.PushService;
@@ -172,111 +174,75 @@ public class HouseService {
 
 		HouseModel newModel = new HouseModel();
 
-		newModel.setBathRoomTemperature(readActTemperature(Device.THERMOSTAT_BAD));
-		newModel.setBathRoomHeating(readHeating(Device.THERMOSTAT_BAD));
+		newModel.setClimateBathRoom(readRoomClimate(Device.THERMOSTAT_BAD, Device.THERMOSTAT_BAD));
+		newModel.setClimateKidsRoom(readRoomClimate(Device.THERMOMETER_KINDERZIMMER));
+		newModel.setClimateLivingRoom(readRoomClimate(Device.THERMOMETER_WOHNZIMMER));
+		newModel.setClimateBedRoom(readRoomClimate(Device.THERMOMETER_SCHLAFZIMMER));
 
-		newModel.setKidsRoomTemperature(readActTemperature(Device.THERMOMETER_KINDERZIMMER));
-		newModel.setKidsRoomHumidity(readHumidity(Device.THERMOMETER_KINDERZIMMER));
-
-		newModel.setLivingRoomTemperature(readActTemperature(Device.THERMOMETER_WOHNZIMMER));
-		newModel.setLivingRoomHumidity(readHumidity(Device.THERMOMETER_WOHNZIMMER));
-
-		newModel.setBedRoomTemperature(readActTemperature(Device.THERMOMETER_SCHLAFZIMMER));
-		newModel.setBedRoomHumidity(readHumidity(Device.THERMOMETER_SCHLAFZIMMER));
-
-		newModel.setTerraceTemperature(readTemperature(Device.DIFFERENZTEMPERATUR_TERRASSE_AUSSEN));
-		newModel.setTerraceSunHeatingDiff(readTemperature(Device.DIFFERENZTEMPERATUR_TERRASSE_DIFF));
-
-		newModel.setEntranceTemperature(readTemperature(Device.DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN));
-		newModel.setEntranceSunHeatingDiff(readTemperature(Device.DIFFERENZTEMPERATUR_EINFAHRT_DIFF));
+		newModel.setClimateTerrace(readOutdoorClimate(Device.DIFFERENZTEMPERATUR_TERRASSE_AUSSEN,
+				Device.DIFFERENZTEMPERATUR_TERRASSE_DIFF));
+		newModel.setClimateEntrance(readOutdoorClimate(Device.DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN,
+				Device.DIFFERENZTEMPERATUR_EINFAHRT_DIFF));
 
 		newModel.setKitchenWindowLightSwitch(readSwitchState(Device.SCHALTER_KUECHE_LICHT));
 
 		newModel.setHouseElectricalPowerConsumption(readPowerConsumption(Device.STROMZAEHLER));
 
-		checkLowBattery(newModel, Device.THERMOSTAT_BAD);
-		checkLowBattery(newModel, Device.THERMOMETER_SCHLAFZIMMER);
-		checkLowBattery(newModel, Device.THERMOMETER_KINDERZIMMER);
-		checkLowBattery(newModel, Device.THERMOMETER_WOHNZIMMER);
-		checkLowBattery(newModel, Device.DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN);
-		checkLowBattery(newModel, Device.DIFFERENZTEMPERATUR_TERRASSE_AUSSEN);
-		checkLowBattery(newModel, Device.STROMZAEHLER);
+		for (Device device : Device.values()) {
+			checkLowBattery(newModel, device);
+		}
 
 		return newModel;
 	}
 
 	public void calculateConclusion(HouseModel newModel) {
 
-		if (newModel.getTerraceTemperature().compareTo(newModel.getEntranceTemperature()) < 0) {
-			// min
-			newModel.setConclusionFacadeMinTemp(newModel.getTerraceTemperature());
-			newModel.setConclusionFacadeMinTempName("Terrasse");
-			// max
-			newModel.setConclusionFacadeMaxTemp(newModel.getEntranceTemperature());
-			newModel.setConclusionFacadeMaxTempName("Einfahrt");
-			newModel.setConclusionFacadeMaxTempSunHeating(newModel.getEntranceSunHeatingDiff());
+		if (newModel.getClimateTerrace().getTemperature()
+				.compareTo(newModel.getClimateEntrance().getTemperature()) < 0) {
+			newModel.setConclusionClimateFacadeMin(newModel.getClimateTerrace());
+			newModel.setConclusionClimateFacadeMax(newModel.getClimateEntrance());
 		} else {
-			// min
-			newModel.setConclusionFacadeMinTemp(newModel.getEntranceTemperature());
-			newModel.setConclusionFacadeMinTempName("Einfahrt");
-			// max
-			newModel.setConclusionFacadeMaxTemp(newModel.getTerraceTemperature());
-			newModel.setConclusionFacadeMaxTempName("Terrasse");
-			newModel.setConclusionFacadeMaxTempSunHeating(newModel.getTerraceSunHeatingDiff());
+			newModel.setConclusionClimateFacadeMin(newModel.getClimateEntrance());
+			newModel.setConclusionClimateFacadeMax(newModel.getClimateTerrace());
 		}
 
-		newModel.setConclusionFacadeSidesDifference(
-				newModel.getConclusionFacadeMaxTemp().subtract(newModel.getConclusionFacadeMinTemp()).abs());
+		BigDecimal sunShadeDiff = newModel.getConclusionClimateFacadeMax().getTemperature()
+				.subtract(newModel.getConclusionClimateFacadeMin().getTemperature()).abs();
+		newModel.getConclusionClimateFacadeMax()
+				.setSunHeatingInContrastToShadeIntensity(lookupIntensity(sunShadeDiff));
 
-		newModel.setConclusionFacadeMaxTempSunIntensity(
-				lookupIntensity(newModel.getConclusionFacadeMaxTempSunHeating()));
-		newModel.setConclusionFacadeMaxTempHeatingIntensity(
-				lookupIntensity(newModel.getConclusionFacadeSidesDifference()));
-
-		newModel.setConclusionHintKidsRoom(
-				new Hint(
-						lookupHint(newModel.getKidsRoomTemperature(), newModel.getEntranceTemperature(),
-								lookupIntensity(newModel.getEntranceSunHeatingDiff()), null),
-						"Kinderzimmer"));
-		newModel.setConclusionHintBathRoom(new Hint(
-				lookupHint(newModel.getBathRoomTemperature(), newModel.getEntranceTemperature(),
-						lookupIntensity(newModel.getEntranceSunHeatingDiff()), newModel.getBathRoomHeating()),
-				"Badezimmer"));
-		newModel.setConclusionHintBedRoom(
-				new Hint(lookupHint(newModel.getBedRoomTemperature(), newModel.getTerraceTemperature(),
-						lookupIntensity(newModel.getTerraceSunHeatingDiff()), null), "Schlafzimmer"));
-		newModel.setConclusionHintLivingRoom(
-				new Hint(lookupHint(newModel.getLivingRoomTemperature(), newModel.getTerraceTemperature(),
-						lookupIntensity(newModel.getTerraceSunHeatingDiff()), null), "Wohnzimmer"));
+		lookupHint(newModel.getClimateKidsRoom(), newModel.getClimateEntrance());
+		lookupHint(newModel.getClimateBathRoom(), newModel.getClimateEntrance());
+		lookupHint(newModel.getClimateBedRoom(), newModel.getClimateTerrace());
+		lookupHint(newModel.getClimateLivingRoom(), newModel.getClimateTerrace());
 
 	}
 
-	private String lookupHint(BigDecimal insideTemperature, BigDecimal outsideTemperature,
-			Intensity sunIntensity, HeatingModel heating) {
+	private void lookupHint(RoomClimate room, OutdoorClimate outdoor) {
 
 		// SELECT max(ts) FROM D_BIDCOS_RF_OEQ0854602_4_CONTROL_MODE where value
 		// = 3;
 
-		if (insideTemperature == null) {
-			return null;
-		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) < 0) {
+		if (room.getTemperature() == null) {
+			return;
+		} else if (room.getTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) < 0) {
 			// TODO: using sun heating in the winter for warming up rooms
-			return null;
-		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0
-				&& outsideTemperature.compareTo(insideTemperature) < 0
-				&& sunIntensity.ordinal() <= Intensity.LOW.ordinal()) {
-			if (heating != null && (heating.isBoostActive()
-					|| heating.getTargetTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0)) {
-				return null;
+			return;
+		} else if (room.getTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0
+				&& outdoor.getTemperature().compareTo(room.getTemperature()) < 0
+				&& outdoor.getSunBeamIntensity().ordinal() <= Intensity.LOW.ordinal()) {
+			if (room.getHeating() != null && (room.getHeating().isBoostActive()
+					|| room.getHeating().getTargetTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0)) {
+				return;
 			} else {
-				return "Fenster öffnen";
+				room.setHint(new Hint("Fenster öffnen"));
 			}
-		} else if (insideTemperature.compareTo(TARGET_TEMPERATURE_INSIDE) > 0
-				&& sunIntensity.ordinal() > Intensity.LOW.ordinal()) {
-			return "Rolladen schließen";
+		} else if (room.getTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0
+				&& outdoor.getSunBeamIntensity().ordinal() > Intensity.LOW.ordinal()) {
+			room.setHint(new Hint("Rolladen schließen"));
 		}
 
-		return null;
+		return;
 	}
 
 	private Intensity lookupIntensity(BigDecimal value) {
@@ -314,27 +280,38 @@ public class HouseService {
 		}
 	}
 
-	private BigDecimal readTemperature(Device device) {
-		return api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.TEMPERATURE));
+	private OutdoorClimate readOutdoorClimate(Device outside, Device diff) {
+		OutdoorClimate outdoorClimate = new OutdoorClimate();
+		outdoorClimate.setTemperature(api.getAsBigDecimal(outside.accessKeyXmlApi(Datapoint.TEMPERATURE)));
+		outdoorClimate.setSunBeamIntensity(
+				lookupIntensity(api.getAsBigDecimal(diff.accessKeyXmlApi(Datapoint.TEMPERATURE))));
+		outdoorClimate.setPlaceName(outside.getPlaceName());
+		return outdoorClimate;
 	}
 
-	private BigDecimal readActTemperature(Device device) {
-		return api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.ACTUAL_TEMPERATURE));
+	private RoomClimate readRoomClimate(Device thermometer) {
+		RoomClimate roomClimate = new RoomClimate();
+		roomClimate.setTemperature(
+				api.getAsBigDecimal(thermometer.accessKeyXmlApi(Datapoint.ACTUAL_TEMPERATURE)));
+		roomClimate.setHumidity(api.getAsBigDecimal(thermometer.accessKeyXmlApi(Datapoint.HUMIDITY)));
+		roomClimate.setPlaceName(thermometer.getPlaceName());
+		return roomClimate;
 	}
 
-	private BigDecimal readHumidity(Device device) {
-		return api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.HUMIDITY));
-	}
-
-	private HeatingModel readHeating(Device device) {
-		HeatingModel model = new HeatingModel();
-		model.setBoostActive(api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.CONTROL_MODE))
+	private RoomClimate readRoomClimate(Device thermometer, Device heating) {
+		RoomClimate roomClimate = readRoomClimate(thermometer);
+		HeatingModel heatingModel = new HeatingModel();
+		heatingModel.setBoostActive(api.getAsBigDecimal(heating.accessKeyXmlApi(Datapoint.CONTROL_MODE))
 				.compareTo(HEATING_CONTROL_MODE_BOOST) == 0);
-		model.setBoostMinutesLeft(
-				api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.BOOST_STATE)).intValue());
-		model.setTargetTemperature(api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.SET_TEMPERATURE)));
-		model.setProgramNamePrefix(device.programNamePrefix());
-		return model;
+		heatingModel.setBoostMinutesLeft(
+				api.getAsBigDecimal(heating.accessKeyXmlApi(Datapoint.BOOST_STATE)).intValue());
+		heatingModel.setTargetTemperature(
+				api.getAsBigDecimal(heating.accessKeyXmlApi(Datapoint.SET_TEMPERATURE)));
+		heatingModel.setProgramNamePrefix(heating.programNamePrefix());
+		roomClimate.setHeating(heatingModel);
+		roomClimate.setPlaceName(thermometer.getPlaceName());
+
+		return roomClimate;
 	}
 
 	private SwitchModel readSwitchState(Device device) {
@@ -357,9 +334,7 @@ public class HouseService {
 			state = api.getAsBoolean(device.accessMainDeviceKeyXmlApi(Datapoint.LOW_BAT));
 		}
 
-		if (state == null) {
-			LogFactory.getLog(HouseService.class).error("Error reading Battery state: " + device.name());
-		} else if (state == true) {
+		if (state != null && state == true) {
 			model.getLowBatteryDevices().add(device.getDescription());
 		}
 	}

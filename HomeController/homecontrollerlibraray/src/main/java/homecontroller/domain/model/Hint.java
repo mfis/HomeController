@@ -8,23 +8,20 @@ public class Hint implements Serializable {
 
 	private String text;
 
-	private String roomName;
-
 	public Hint() {
 		super();
 	}
 
-	public Hint(String text, String roomName) {
+	public Hint(String text) {
 		super();
 		this.text = text;
-		this.roomName = roomName;
 	}
 
-	public String formatWithRoomName() {
+	public String formatWithRoomName(RoomClimate roomClimate) {
 		if (text == null || text.trim().length() == 0) {
 			return null;
 		}
-		return roomName + ": " + text;
+		return roomClimate.getPlaceName() + ": " + text;
 	}
 
 	@Override
@@ -40,11 +37,4 @@ public class Hint implements Serializable {
 		this.text = text;
 	}
 
-	public String getRoomName() {
-		return roomName;
-	}
-
-	public void setRoomName(String roomName) {
-		this.roomName = roomName;
-	}
 }

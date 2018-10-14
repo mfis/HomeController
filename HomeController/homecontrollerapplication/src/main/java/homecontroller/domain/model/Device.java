@@ -4,16 +4,16 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum Device {
 
-	THERMOSTAT_BAD(Protocol.HM, "OEQ0854602", 4, "Thermostat Bad"), //
-	THERMOMETER_KINDERZIMMER(Protocol.HMIP, "000E97099314A3", 1, "Thermometer Kinderzimmer"), //
-	THERMOMETER_WOHNZIMMER(Protocol.HMIP, "000E97099312D5", 1, "Thermometer Wohnzimmer"), //
-	THERMOMETER_SCHLAFZIMMER(Protocol.HMIP, "000E97099314C4", 1, "Thermometer Schlafzimmer"), //
-	DIFFERENZTEMPERATUR_TERRASSE_AUSSEN(Protocol.HM, "OEQ0801741", 2, "Thermometer Terrasse"), //
-	DIFFERENZTEMPERATUR_TERRASSE_DIFF(Protocol.HM, "OEQ0801741", 3, "Thermometer Terrasse"), //
-	DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN(Protocol.HM, "OEQ0801807", 2, "Thermometer Einfahrt"), //
-	DIFFERENZTEMPERATUR_EINFAHRT_DIFF(Protocol.HM, "OEQ0801807", 3, "Thermometer Einfahrt"), //
-	SCHALTER_KUECHE_LICHT(Protocol.HM, "OEQ0712456", 1, "Schalter Küche Fensterlicht"), //
-	STROMZAEHLER(Protocol.HM, "NEQ0861520", 1, "Stromzähler"), //
+	THERMOSTAT_BAD(Protocol.HM, "OEQ0854602", 4, "Thermostat", "Bad"), //
+	THERMOMETER_KINDERZIMMER(Protocol.HMIP, "000E97099314A3", 1, "Thermometer", "Kinderzimmer"), //
+	THERMOMETER_WOHNZIMMER(Protocol.HMIP, "000E97099312D5", 1, "Thermometer", "Wohnzimmer"), //
+	THERMOMETER_SCHLAFZIMMER(Protocol.HMIP, "000E97099314C4", 1, "Thermometer", "Schlafzimmer"), //
+	DIFFERENZTEMPERATUR_TERRASSE_AUSSEN(Protocol.HM, "OEQ0801741", 2, "Thermometer", "Terrasse"), //
+	DIFFERENZTEMPERATUR_TERRASSE_DIFF(Protocol.HM, "OEQ0801741", 3, "Sonnensensor", "Terrasse"), //
+	DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN(Protocol.HM, "OEQ0801807", 2, "Thermometer", " Einfahrt"), //
+	DIFFERENZTEMPERATUR_EINFAHRT_DIFF(Protocol.HM, "OEQ0801807", 3, "Sonnensensor", "Einfahrt"), //
+	SCHALTER_KUECHE_LICHT(Protocol.HM, "OEQ0712456", 1, "Schalter Fensterlicht", "Küche"), //
+	STROMZAEHLER(Protocol.HM, "NEQ0861520", 1, "Stromzähler", "Haus"), //
 	;
 
 	private Protocol protocol;
@@ -22,13 +22,16 @@ public enum Device {
 
 	private int channel;
 
-	private String description;
+	private String type;
 
-	private Device(Protocol protocol, String id, int channel, String description) {
+	private String placeName;
+
+	private Device(Protocol protocol, String id, int channel, String type, String placeName) {
 		this.protocol = protocol;
 		this.id = id;
 		this.channel = channel;
-		this.description = description;
+		this.type = type;
+		this.placeName = placeName;
 	}
 
 	public String accessKeyXmlApi(Datapoint datapoint) {
@@ -79,7 +82,15 @@ public enum Device {
 	}
 
 	public String getDescription() {
-		return description;
+		return type + " " + placeName;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public String getPlaceName() {
+		return placeName;
 	}
 
 }
