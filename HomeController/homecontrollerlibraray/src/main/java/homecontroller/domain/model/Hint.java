@@ -1,19 +1,14 @@
 package homecontroller.domain.model;
 
-import java.io.Serializable;
+public enum Hint {
 
-public class Hint implements Serializable {
-
-	private static final long serialVersionUID = 1L;
+	OPEN_WINDOW("Fenster öffnen"), //
+	CLOSE_ROLLER_SHUTTER("Rolllade schließen"), //
+	;
 
 	private String text;
 
-	public Hint() {
-		super();
-	}
-
-	public Hint(String text) {
-		super();
+	private Hint(String text) {
 		this.text = text;
 	}
 
@@ -24,17 +19,8 @@ public class Hint implements Serializable {
 		return roomClimate.getPlaceName() + ": " + text;
 	}
 
-	@Override
-	public String toString() {
-		return getText();
-	}
-
 	public String getText() {
 		return text;
-	}
-
-	public void setText(String text) {
-		this.text = text;
 	}
 
 }

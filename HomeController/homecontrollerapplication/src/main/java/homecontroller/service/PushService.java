@@ -120,7 +120,14 @@ public class PushService {
 
 		List<String> hintStrings = new LinkedList<>();
 		for (RoomClimate room : m.lookupRooms()) {
-			hintStrings.add(room.getHint() != null ? room.getHint().formatWithRoomName(room) : null);
+			try {
+				hintStrings.add(
+						(room != null && room.getHint() != null) ? room.getHint().formatWithRoomName(room)
+								: null);
+			} catch (NullPointerException npe) {
+				System.out.println("a");
+				System.out.println("b");
+			}
 		}
 		return hintStrings;
 	}

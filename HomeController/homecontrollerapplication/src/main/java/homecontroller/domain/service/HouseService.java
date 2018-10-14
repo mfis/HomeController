@@ -236,11 +236,11 @@ public class HouseService {
 					|| minutesSinceLastHeatingBoost(room) < HINT_TIMEOUT_MINUTES_AFTER_BOOST)) {
 				return;
 			} else {
-				room.setHint(new Hint("Fenster öffnen"));
+				room.setHint(Hint.OPEN_WINDOW);
 			}
 		} else if (room.getTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0
 				&& outdoor.getSunBeamIntensity().ordinal() > Intensity.LOW.ordinal()) {
-			room.setHint(new Hint("Rolladen schließen"));
+			room.setHint(Hint.CLOSE_ROLLER_SHUTTER);
 		}
 
 		return;
