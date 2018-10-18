@@ -12,7 +12,9 @@ public class SwitchModel implements Serializable {
 
 	private boolean state;
 
-	private String deviceIdVar;
+	private Device device;
+
+	private Boolean automation;
 
 	public boolean isState() {
 		return state;
@@ -22,12 +24,20 @@ public class SwitchModel implements Serializable {
 		this.state = state;
 	}
 
-	public String getDeviceIdVar() {
-		return deviceIdVar;
+	public Device getDevice() {
+		return device;
 	}
 
-	public void setDeviceIdVar(String deviceIdVar) {
-		this.deviceIdVar = deviceIdVar;
+	public void setDevice(Device device) {
+		this.device = device;
+	}
+
+	public Boolean getAutomation() {
+		return automation;
+	}
+
+	public void setAutomation(Boolean automation) {
+		this.automation = automation;
 	}
 
 }

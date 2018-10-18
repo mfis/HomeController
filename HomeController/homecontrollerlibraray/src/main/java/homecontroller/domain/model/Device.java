@@ -1,5 +1,7 @@
 package homecontroller.domain.model;
 
+import org.springframework.util.StringUtils;
+
 public enum Device {
 
 	THERMOSTAT_BAD(Protocol.HM, "OEQ0854602", 4, "Thermostat", "Bad"), //
@@ -8,7 +10,7 @@ public enum Device {
 	THERMOMETER_SCHLAFZIMMER(Protocol.HMIP, "000E97099314C4", 1, "Thermometer", "Schlafzimmer"), //
 	DIFFERENZTEMPERATUR_TERRASSE_AUSSEN(Protocol.HM, "OEQ0801741", 2, "Thermometer", "Terrasse"), //
 	DIFFERENZTEMPERATUR_TERRASSE_DIFF(Protocol.HM, "OEQ0801741", 3, "Sonnensensor", "Terrasse"), //
-	DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN(Protocol.HM, "OEQ0801807", 2, "Thermometer", " Einfahrt"), //
+	DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN(Protocol.HM, "OEQ0801807", 2, "Thermometer", "Einfahrt"), //
 	DIFFERENZTEMPERATUR_EINFAHRT_DIFF(Protocol.HM, "OEQ0801807", 3, "Sonnensensor", "Einfahrt"), //
 	SCHALTER_KUECHE_LICHT(Protocol.HM, "OEQ0712456", 1, "Schalter Fensterlicht", "Küche"), //
 	STROMZAEHLER(Protocol.HM, "NEQ0861520", 1, "Stromzähler", "Haus"), //
@@ -47,7 +49,16 @@ public enum Device {
 	}
 
 	public String programNamePrefix() {
-		return getDescription().replaceAll(" ", "");
+		String prefix = getDescription();
+		prefix = StringUtils.replace(prefix, " ", "");
+		prefix = StringUtils.replace(prefix, "ä", "ae"); // FIXME
+		prefix = StringUtils.replace(prefix, "ö", "oe");
+		prefix = StringUtils.replace(prefix, "ü", "ue");
+		prefix = StringUtils.replace(prefix, "Ä", "Ae");
+		prefix = StringUtils.replace(prefix, "Ö", "Oe");
+		prefix = StringUtils.replace(prefix, "Ü", "Ue");
+		prefix = StringUtils.replace(prefix, "ß", "ss");
+		return prefix;
 	}
 
 	public boolean isHomematic() {

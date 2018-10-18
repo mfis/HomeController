@@ -330,7 +330,8 @@ public class HouseService {
 	private SwitchModel readSwitchState(Device device) {
 		SwitchModel switchModel = new SwitchModel();
 		switchModel.setState(api.getAsBoolean(device.accessKeyXmlApi(Datapoint.STATE)));
-		switchModel.setDeviceIdVar(device.accessKeyXmlApi(Datapoint.STATE));
+		switchModel.setDevice(device);
+		switchModel.setAutomation(api.getAsBoolean(device.programNamePrefix() + "Automatic"));
 		return switchModel;
 	}
 
