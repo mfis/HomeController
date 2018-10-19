@@ -16,6 +16,8 @@ public class SwitchModel implements Serializable {
 
 	private Boolean automation;
 
+	private String automationInfoText;
+
 	public boolean isState() {
 		return state;
 	}
@@ -38,6 +40,14 @@ public class SwitchModel implements Serializable {
 
 	public void setAutomation(Boolean automation) {
 		this.automation = automation;
+	}
+
+	public String getAutomationInfoText() {
+		return automationInfoText;
+	}
+
+	public void setAutomationInfoText(String automationInfoText) {
+		this.automationInfoText = automationInfoText;
 	}
 
 }
