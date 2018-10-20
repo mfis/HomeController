@@ -2,8 +2,7 @@ package homecontroller.domain.model;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.LinkedList;
 
 public class HistoryModel implements Serializable {
 
@@ -11,25 +10,25 @@ public class HistoryModel implements Serializable {
 
 	private long dateTime;
 
-	private Map<String, PowerConsumptionMonth> electricPowerConsumption;
+	private LinkedList<PowerConsumptionMonth> electricPowerConsumption;
 
 	// ----------
 
 	public HistoryModel() {
 		super();
 		dateTime = new Date().getTime();
-		electricPowerConsumption = new LinkedHashMap<>();
+		electricPowerConsumption = new LinkedList<>();
 	}
 
 	public long getDateTime() {
 		return dateTime;
 	}
 
-	public Map<String, PowerConsumptionMonth> getElectricPowerConsumption() {
+	public LinkedList<PowerConsumptionMonth> getElectricPowerConsumption() {
 		return electricPowerConsumption;
 	}
 
-	public void setElectricPowerConsumption(Map<String, PowerConsumptionMonth> electricPowerConsumption) {
+	public void setElectricPowerConsumption(LinkedList<PowerConsumptionMonth> electricPowerConsumption) {
 		this.electricPowerConsumption = electricPowerConsumption;
 	}
 

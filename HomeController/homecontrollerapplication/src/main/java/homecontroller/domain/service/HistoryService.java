@@ -1,6 +1,5 @@
 package homecontroller.domain.service;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -15,8 +14,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import homecontroller.dao.ModelDAO;
-import homecontroller.database.mapper.LongRowMapper;
-import homecontroller.database.mapper.TimestampRowMapper;
+import homecontroller.database.mapper.TimestampValuePair;
+import homecontroller.database.mapper.TimestampValueRowMapper;
 import homecontroller.domain.model.Datapoint;
 import homecontroller.domain.model.Device;
 import homecontroller.domain.model.HistoryModel;
@@ -24,8 +23,6 @@ import homecontroller.domain.model.PowerConsumptionMonth;
 
 @Component
 public class HistoryService {
-
-	private SimpleDateFormat monthYear = new SimpleDateFormat("yyyy-MM");
 
 	// 2017-10-31 23:59:59.999
 	private SimpleDateFormat sqlTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -48,50 +45,59 @@ public class HistoryService {
 	private void refreshHistoryModelComplete() {
 
 		HistoryModel newModel = new HistoryModel();
-
-		List<Timestamp> timestampsMax = jdbcTemplate.query(
-				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM "
-						+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER)
-						+ " group by month order by month asc;",
-				new Object[] {}, new TimestampRowMapper("last"));
-
-		Timestamp lastTimestamp = null;
-		for (Timestamp timestamp : timestampsMax) {
-			if (lastTimestamp != null) {
-				PowerConsumptionMonth pcm = new PowerConsumptionMonth();
-				pcm.setMeasurePointMax(timestamp.getTime());
-				pcm.setMeasurePointMin(lastTimestamp.getTime());
-				String key = monthYear.format(timestamp);
-				newModel.getElectricPowerConsumption().put(key, pcm);
-			}
-			lastTimestamp = timestamp;
-		}
-
-		for (PowerConsumptionMonth pcm : newModel.getElectricPowerConsumption().values()) {
-			String sqlFrom = sqlTimestamp.format(new Date(pcm.getMeasurePointMin()));
-			String sqlTo = sqlTimestamp.format(new Date(pcm.getMeasurePointMax()));
-			List<Long> measurePoints = jdbcTemplate.query(
-					"select ts, value FROM "
-							+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER)
-							+ " where ts between '" + sqlFrom + "' and '" + sqlTo + "'  order by ts asc;",
-					new Object[] {}, new LongRowMapper("value"));
-			Long lastValue = null;
-			Long powerConsumption = 0L;
-			for (Long measurePoint : measurePoints) {
-				if (lastValue != null) {
-					if (lastValue < measurePoint) {
-						powerConsumption += (measurePoint - lastValue);
-					} else if (lastValue.compareTo(measurePoint) > 0) {
-						// overflow
-						powerConsumption += measurePoint;
-					}
-				}
-				lastValue = measurePoint;
-			}
-			pcm.setPowerConsumption(powerConsumption.longValue() / 1000);
-		}
-
 		ModelDAO.getInstance().write(newModel);
+
+		calculateElectricPowerConsumption(newModel, new Date(0));
+	}
+
+	private void calculateElectricPowerConsumption(HistoryModel newModel, Date fromDate) {
+
+		String startTs = sqlTimestamp.format(fromDate);
+
+		List<TimestampValuePair> timestampValues = jdbcTemplate.query(
+				"select ts, value FROM " + Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER)
+						+ " where ts > '" + startTs + "' order by ts asc;",
+				new Object[] {}, new TimestampValueRowMapper());
+
+		for (TimestampValuePair pair : timestampValues) {
+			PowerConsumptionMonth dest = null;
+			for (PowerConsumptionMonth pcm : newModel.getElectricPowerConsumption()) {
+				if (isSameMonth(pair.getTimeatamp(), new Date(pcm.getMeasurePointMax()))) {
+					dest = pcm;
+				}
+			}
+			if (dest == null) {
+				dest = new PowerConsumptionMonth();
+				if (newModel.getElectricPowerConsumption().size() > 0) {
+					dest.setMeasurePointMin(newModel.getElectricPowerConsumption()
+							.get(newModel.getElectricPowerConsumption().size() - 1).getMeasurePointMax());
+					dest.setLastSingleValue(newModel.getElectricPowerConsumption()
+							.get(newModel.getElectricPowerConsumption().size() - 1).getLastSingleValue());
+				}
+				newModel.getElectricPowerConsumption().add(dest);
+			}
+			addMeasurePoint(dest, pair);
+		}
+	}
+
+	private void addMeasurePoint(PowerConsumptionMonth pcm, TimestampValuePair measurePoint) {
+
+		if (pcm.getLastSingleValue() != null) {
+			try {
+				if (pcm.getLastSingleValue() < measurePoint.getValue()) {
+					pcm.setPowerConsumption(
+							(pcm.getPowerConsumption() != null ? pcm.getPowerConsumption() : 0)
+									+ (measurePoint.getValue() - pcm.getLastSingleValue()));
+				} else if (pcm.getLastSingleValue().compareTo(measurePoint.getValue()) > 0) {
+					// overflow
+					pcm.setPowerConsumption(pcm.getPowerConsumption() + measurePoint.getValue());
+				}
+			} catch (NullPointerException npe) {
+				System.out.println("");
+			}
+		}
+		pcm.setLastSingleValue(measurePoint.getValue());
+		pcm.setMeasurePointMax(measurePoint.getTimeatamp().getTime());
 	}
 
 	@Scheduled(cron = "0 2/3 * * * *")
@@ -103,9 +109,11 @@ public class HistoryService {
 		}
 
 		if (model.getElectricPowerConsumption() == null || model.getElectricPowerConsumption().isEmpty()) {
-			refreshHistoryModelComplete();
 			return;
 		}
+
+		calculateElectricPowerConsumption(model, new Date(model.getElectricPowerConsumption()
+				.get(model.getElectricPowerConsumption().size() - 1).getMeasurePointMax()));
 
 	}
 

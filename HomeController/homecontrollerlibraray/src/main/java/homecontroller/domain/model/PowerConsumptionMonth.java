@@ -6,19 +6,19 @@ public class PowerConsumptionMonth implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	private long powerConsumption;
+	private Long powerConsumption;
 
 	private long measurePointMin;
 
 	private long measurePointMax;
 
-	private boolean isMonthCompleted;
+	private Long lastSingleValue;
 
-	public long getPowerConsumption() {
+	public Long getPowerConsumption() {
 		return powerConsumption;
 	}
 
-	public void setPowerConsumption(long powerConsumption) {
+	public void setPowerConsumption(Long powerConsumption) {
 		this.powerConsumption = powerConsumption;
 	}
 
@@ -38,12 +38,12 @@ public class PowerConsumptionMonth implements Serializable {
 		this.measurePointMax = measurePointMax;
 	}
 
-	public boolean isMonthCompleted() {
-		return isMonthCompleted;
+	public Long getLastSingleValue() {
+		return lastSingleValue;
 	}
 
-	public void setMonthCompleted(boolean isMonthCompleted) {
-		this.isMonthCompleted = isMonthCompleted;
+	public void setLastSingleValue(Long lastSingleValue) {
+		this.lastSingleValue = lastSingleValue;
 	}
 
 }
