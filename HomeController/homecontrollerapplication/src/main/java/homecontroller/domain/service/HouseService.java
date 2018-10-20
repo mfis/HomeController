@@ -4,13 +4,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map.Entry;
 
 import javax.annotation.PostConstruct;
 
@@ -22,13 +15,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import homecontroller.dao.ModelDAO;
-import homecontroller.database.mapper.BigDecimalRowMapper;
 import homecontroller.database.mapper.TimestampRowMapper;
 import homecontroller.domain.model.Datapoint;
 import homecontroller.domain.model.Device;
 import homecontroller.domain.model.HeatingModel;
 import homecontroller.domain.model.Hint;
-import homecontroller.domain.model.HistoryModel;
 import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.Intensity;
 import homecontroller.domain.model.OutdoorClimate;
@@ -66,7 +57,6 @@ public class HouseService {
 
 		try {
 			refreshHouseModel(false);
-			refreshHistoryModelComplete();
 		} catch (Exception e) {
 			LogFactory.getLog(HouseService.class).error("Could not initialize HouseService completly.", e);
 		}
@@ -92,83 +82,6 @@ public class HouseService {
 		}
 
 		pushService.send(oldModel, newModel);
-	}
-
-	@Scheduled(cron = "5 0 0 * * *")
-	private void refreshHistoryModelComplete() {
-
-		HistoryModel newModel = new HistoryModel();
-		List<Timestamp> timestamps = jdbcTemplate.query(
-				"select formatdatetime(ts, 'yyyy_MM') as month, max(ts) as last FROM "
-						+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER)
-						+ " group by month order by month asc;",
-				new Object[] {}, new TimestampRowMapper("last"));
-		for (Timestamp timestamp : timestamps) {
-			BigDecimal value = jdbcTemplate.queryForObject("select value FROM "
-					+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER) + " where ts = ?;",
-					new Object[] { timestamp }, new BigDecimalRowMapper("value"));
-			newModel.getMonthlyPowerConsumption().put(timestamp.getTime(), value);
-		}
-		ModelDAO.getInstance().write(newModel);
-	}
-
-	@Scheduled(cron = "0 2/3 * * * *")
-	private void refreshHistoryModel() {
-
-		HistoryModel model = ModelDAO.getInstance().readHistoryModel();
-		if (model == null) {
-			return;
-		}
-
-		if (model.getMonthlyPowerConsumption() == null || model.getMonthlyPowerConsumption().isEmpty()) {
-			refreshHistoryModelComplete();
-			return;
-		}
-
-		Timestamp timestamp = jdbcTemplate.queryForObject(
-				"select max(ts) as time from "
-						+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER) + ";",
-				new TimestampRowMapper("time"));
-
-		Entry<Long, BigDecimal> lastElement = null;
-		LinkedHashMap<Long, BigDecimal> map = (LinkedHashMap<Long, BigDecimal>) model
-				.getMonthlyPowerConsumption();
-		Iterator<Entry<Long, BigDecimal>> iterator = map.entrySet().iterator();
-		HashMap<Long, BigDecimal> newMap = new LinkedHashMap<Long, BigDecimal>();
-		while (iterator.hasNext()) {
-			lastElement = iterator.next();
-			if (iterator.hasNext()) {
-				newMap.put(lastElement.getKey(), lastElement.getValue());
-			}
-		}
-
-		if (timestamp.getTime() > lastElement.getKey()) {
-			BigDecimal value = jdbcTemplate.queryForObject("select value FROM "
-					+ Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER) + " where ts = ?;",
-					new Object[] { timestamp }, new BigDecimalRowMapper("value"));
-			if (isSameMonth(timestamp, new Date(lastElement.getKey()))) {
-				newMap.put(timestamp.getTime(), value);
-				model.setMonthlyPowerConsumption(newMap);
-			} else {
-				model.getMonthlyPowerConsumption().put(timestamp.getTime(), value);
-			}
-		}
-	}
-
-	private boolean isSameMonth(Date date1, Date date2) {
-
-		Calendar cal1 = Calendar.getInstance();
-		cal1.setTime(date1);
-		Calendar cal2 = Calendar.getInstance();
-		cal2.setTime(date2);
-
-		if (cal1 == null || cal2 == null) {
-			return false;
-		}
-
-		return cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA)
-				&& cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
-				&& cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
 	}
 
 	private HouseModel refreshModel() {
