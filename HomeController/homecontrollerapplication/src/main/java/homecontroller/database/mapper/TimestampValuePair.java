@@ -1,12 +1,12 @@
 package homecontroller.database.mapper;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 public class TimestampValuePair {
 
-	private Timestamp timeatamp;
+	private LocalDateTime timeatamp;
 
-	public TimestampValuePair(Timestamp timeatamp, long value) {
+	public TimestampValuePair(LocalDateTime timeatamp, long value) {
 		super();
 		this.timeatamp = timeatamp;
 		this.value = value;
@@ -14,11 +14,11 @@ public class TimestampValuePair {
 
 	private long value;
 
-	public Timestamp getTimeatamp() {
+	public LocalDateTime getTimeatamp() {
 		return timeatamp;
 	}
 
-	public void setTimeatamp(Timestamp timeatamp) {
+	public void setTimeatamp(LocalDateTime timeatamp) {
 		this.timeatamp = timeatamp;
 	}
 

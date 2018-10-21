@@ -12,6 +12,8 @@ public class HistoryModel implements Serializable {
 
 	private LinkedList<PowerConsumptionMonth> electricPowerConsumption;
 
+	private boolean electricPowerConsumptionInitialized = false;
+
 	// ----------
 
 	public HistoryModel() {
@@ -30,6 +32,14 @@ public class HistoryModel implements Serializable {
 
 	public void setElectricPowerConsumption(LinkedList<PowerConsumptionMonth> electricPowerConsumption) {
 		this.electricPowerConsumption = electricPowerConsumption;
+	}
+
+	public boolean isElectricPowerConsumptionInitialized() {
+		return electricPowerConsumptionInitialized;
+	}
+
+	public void setElectricPowerConsumptionInitialized(boolean electricPowerConsumptionInitialized) {
+		this.electricPowerConsumptionInitialized = electricPowerConsumptionInitialized;
 	}
 
 }

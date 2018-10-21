@@ -1,6 +1,9 @@
 package homecontroller.domain.model;
 
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 public class PowerConsumptionMonth implements Serializable {
 
@@ -11,6 +14,8 @@ public class PowerConsumptionMonth implements Serializable {
 	private long measurePointMin;
 
 	private long measurePointMax;
+
+	private transient LocalDateTime measurePointMaxDateTime = null;
 
 	private Long lastSingleValue;
 
@@ -34,8 +39,17 @@ public class PowerConsumptionMonth implements Serializable {
 		return measurePointMax;
 	}
 
+	public LocalDateTime measurePointMaxDateTime() {
+		if (measurePointMaxDateTime == null) {
+			measurePointMaxDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(measurePointMax),
+					ZoneId.systemDefault());
+		}
+		return measurePointMaxDateTime;
+	}
+
 	public void setMeasurePointMax(long measurePointMax) {
 		this.measurePointMax = measurePointMax;
+		measurePointMaxDateTime = null;
 	}
 
 	public Long getLastSingleValue() {

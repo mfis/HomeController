@@ -1,8 +1,9 @@
 package homecontroller.domain.service;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -24,8 +25,8 @@ import homecontroller.domain.model.PowerConsumptionMonth;
 @Component
 public class HistoryService {
 
-	// 2017-10-31 23:59:59.999
-	private SimpleDateFormat sqlTimestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+	private final static DateTimeFormatter SQL_TIMESTAMP_FORMATTER = DateTimeFormatter
+			.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
@@ -44,15 +45,36 @@ public class HistoryService {
 	@Scheduled(cron = "5 0 0 * * *")
 	private void refreshHistoryModelComplete() {
 
+		HistoryModel oldModel = ModelDAO.getInstance().readHistoryModel();
+		if (oldModel != null) {
+			oldModel.setElectricPowerConsumptionInitialized(false);
+		}
+
 		HistoryModel newModel = new HistoryModel();
 		ModelDAO.getInstance().write(newModel);
 
-		calculateElectricPowerConsumption(newModel, new Date(0));
+		calculateElectricPowerConsumption(newModel,
+				LocalDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneId.systemDefault()));
+		newModel.setElectricPowerConsumptionInitialized(true);
 	}
 
-	private void calculateElectricPowerConsumption(HistoryModel newModel, Date fromDate) {
+	@Scheduled(fixedDelay = (1000 * 60 * 3))
+	private void refreshHistoryModel() {
 
-		String startTs = sqlTimestamp.format(fromDate);
+		HistoryModel model = ModelDAO.getInstance().readHistoryModel();
+		if (model == null || model.getElectricPowerConsumption() == null) {
+			return;
+		}
+
+		if (model.isElectricPowerConsumptionInitialized()) {
+			calculateElectricPowerConsumption(model, model.getElectricPowerConsumption()
+					.get(model.getElectricPowerConsumption().size() - 1).measurePointMaxDateTime());
+		}
+	}
+
+	private void calculateElectricPowerConsumption(HistoryModel newModel, LocalDateTime fromDateTime) {
+
+		String startTs = SQL_TIMESTAMP_FORMATTER.format(fromDateTime);
 
 		List<TimestampValuePair> timestampValues = jdbcTemplate.query(
 				"select ts, value FROM " + Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER)
@@ -62,7 +84,7 @@ public class HistoryService {
 		for (TimestampValuePair pair : timestampValues) {
 			PowerConsumptionMonth dest = null;
 			for (PowerConsumptionMonth pcm : newModel.getElectricPowerConsumption()) {
-				if (isSameMonth(pair.getTimeatamp(), new Date(pcm.getMeasurePointMax()))) {
+				if (isSameMonth(pair.getTimeatamp(), pcm.measurePointMaxDateTime())) {
 					dest = pcm;
 				}
 			}
@@ -83,53 +105,20 @@ public class HistoryService {
 	private void addMeasurePoint(PowerConsumptionMonth pcm, TimestampValuePair measurePoint) {
 
 		if (pcm.getLastSingleValue() != null) {
-			try {
-				if (pcm.getLastSingleValue() < measurePoint.getValue()) {
-					pcm.setPowerConsumption(
-							(pcm.getPowerConsumption() != null ? pcm.getPowerConsumption() : 0)
-									+ (measurePoint.getValue() - pcm.getLastSingleValue()));
-				} else if (pcm.getLastSingleValue().compareTo(measurePoint.getValue()) > 0) {
-					// overflow
-					pcm.setPowerConsumption(pcm.getPowerConsumption() + measurePoint.getValue());
-				}
-			} catch (NullPointerException npe) {
-				System.out.println("");
+			if (pcm.getLastSingleValue() < measurePoint.getValue()) {
+				pcm.setPowerConsumption((pcm.getPowerConsumption() != null ? pcm.getPowerConsumption() : 0)
+						+ (measurePoint.getValue() - pcm.getLastSingleValue()));
+			} else if (pcm.getLastSingleValue().compareTo(measurePoint.getValue()) > 0) {
+				// overflow
+				pcm.setPowerConsumption(pcm.getPowerConsumption() + measurePoint.getValue());
 			}
 		}
 		pcm.setLastSingleValue(measurePoint.getValue());
-		pcm.setMeasurePointMax(measurePoint.getTimeatamp().getTime());
+		pcm.setMeasurePointMax(
+				measurePoint.getTimeatamp().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
 	}
 
-	@Scheduled(cron = "0 2/3 * * * *")
-	private void refreshHistoryModel() {
-
-		HistoryModel model = ModelDAO.getInstance().readHistoryModel();
-		if (model == null) {
-			return;
-		}
-
-		if (model.getElectricPowerConsumption() == null || model.getElectricPowerConsumption().isEmpty()) {
-			return;
-		}
-
-		calculateElectricPowerConsumption(model, new Date(model.getElectricPowerConsumption()
-				.get(model.getElectricPowerConsumption().size() - 1).getMeasurePointMax()));
-
-	}
-
-	private boolean isSameMonth(Date date1, Date date2) {
-
-		Calendar cal1 = Calendar.getInstance();
-		cal1.setTime(date1);
-		Calendar cal2 = Calendar.getInstance();
-		cal2.setTime(date2);
-
-		if (cal1 == null || cal2 == null) {
-			return false;
-		}
-
-		return cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA)
-				&& cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
-				&& cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
+	private boolean isSameMonth(LocalDateTime date1, LocalDateTime date2) {
+		return date1.getYear() == date2.getYear() && date1.getMonthValue() == date2.getMonthValue();
 	}
 }
