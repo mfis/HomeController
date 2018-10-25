@@ -1,22 +1,18 @@
 package homecontroller.domain.service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import homecontroller.dao.ModelDAO;
 import homecontroller.database.mapper.TimestampValuePair;
-import homecontroller.database.mapper.TimestampValueRowMapper;
 import homecontroller.domain.model.Datapoint;
 import homecontroller.domain.model.Device;
 import homecontroller.domain.model.HistoryModel;
@@ -25,11 +21,8 @@ import homecontroller.domain.model.PowerConsumptionMonth;
 @Component
 public class HistoryService {
 
-	private final static DateTimeFormatter SQL_TIMESTAMP_FORMATTER = DateTimeFormatter
-			.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-
 	@Autowired
-	private JdbcTemplate jdbcTemplate;
+	private HistoryDAO historyDAO;
 
 	@PostConstruct
 	public void init() {
@@ -53,8 +46,7 @@ public class HistoryService {
 		HistoryModel newModel = new HistoryModel();
 		ModelDAO.getInstance().write(newModel);
 
-		calculateElectricPowerConsumption(newModel,
-				LocalDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneId.systemDefault()));
+		calculateElectricPowerConsumption(newModel, null);
 		newModel.setElectricPowerConsumptionInitialized(true);
 	}
 
@@ -74,12 +66,8 @@ public class HistoryService {
 
 	private void calculateElectricPowerConsumption(HistoryModel newModel, LocalDateTime fromDateTime) {
 
-		String startTs = SQL_TIMESTAMP_FORMATTER.format(fromDateTime);
-
-		List<TimestampValuePair> timestampValues = jdbcTemplate.query(
-				"select ts, value FROM " + Device.STROMZAEHLER.accessKeyHistorian(Datapoint.ENERGY_COUNTER)
-						+ " where ts > '" + startTs + "' order by ts asc;",
-				new Object[] {}, new TimestampValueRowMapper());
+		List<TimestampValuePair> timestampValues = historyDAO.readValues(Device.STROMZAEHLER,
+				Datapoint.ENERGY_COUNTER, fromDateTime);
 
 		for (TimestampValuePair pair : timestampValues) {
 			PowerConsumptionMonth dest = null;

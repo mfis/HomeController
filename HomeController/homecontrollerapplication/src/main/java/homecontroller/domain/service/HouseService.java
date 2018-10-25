@@ -1,25 +1,21 @@
 package homecontroller.domain.service;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
-import java.time.Duration;
-import java.time.Instant;
 
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import homecontroller.dao.ModelDAO;
-import homecontroller.database.mapper.TimestampRowMapper;
 import homecontroller.domain.model.Datapoint;
 import homecontroller.domain.model.Device;
 import homecontroller.domain.model.HeatingModel;
 import homecontroller.domain.model.Hint;
+import homecontroller.domain.model.HomematicConstants;
 import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.Intensity;
 import homecontroller.domain.model.OutdoorClimate;
@@ -38,20 +34,19 @@ public class HouseService {
 	private final static BigDecimal SUN_INTENSITY_LOW = new BigDecimal("8");
 	private final static BigDecimal SUN_INTENSITY_MEDIUM = new BigDecimal("15");
 
-	private final static BigDecimal HEATING_CONTROL_MODE_BOOST = new BigDecimal(3);
 	private final static long HINT_TIMEOUT_MINUTES_AFTER_BOOST = 90L;
 
 	private final static Object REFRESH_MONITOR = new Object();
 	private final static long REFRESH_TIMEOUT = 5 * 1000; // 5 sec
 
 	@Autowired
-	private JdbcTemplate jdbcTemplate;
-
-	@Autowired
 	private HomematicAPI api;
 
 	@Autowired
 	private PushService pushService;
+
+	@Autowired
+	private HistoryDAO historyDAO;
 
 	@PostConstruct
 	public void init() {
@@ -147,7 +142,7 @@ public class HouseService {
 				&& outdoor.getSunBeamIntensity().ordinal() <= Intensity.LOW.ordinal()) {
 			if (room.getHeating() != null && (room.getHeating().isBoostActive()
 					|| room.getHeating().getTargetTemperature().compareTo(TARGET_TEMPERATURE_INSIDE) > 0
-					|| minutesSinceLastHeatingBoost(room) < HINT_TIMEOUT_MINUTES_AFTER_BOOST)) {
+					|| historyDAO.minutesSinceLastHeatingBoost(room) < HINT_TIMEOUT_MINUTES_AFTER_BOOST)) {
 				return;
 			} else {
 				room.setHint(Hint.OPEN_WINDOW);
@@ -158,15 +153,6 @@ public class HouseService {
 		}
 
 		return;
-	}
-
-	private long minutesSinceLastHeatingBoost(RoomClimate room) {
-		Timestamp timestamp = jdbcTemplate.queryForObject("select max(ts) as time FROM "
-				+ room.getDeviceHeating().accessKeyHistorian(Datapoint.CONTROL_MODE) + " where value = ?;",
-				new Object[] { HEATING_CONTROL_MODE_BOOST.intValue() }, new TimestampRowMapper("time"));
-
-		Duration timeElapsed = Duration.between(Instant.ofEpochMilli(timestamp.getTime()), Instant.now());
-		return timeElapsed.toMinutes();
 	}
 
 	private Intensity lookupIntensity(BigDecimal value) {
@@ -228,7 +214,7 @@ public class HouseService {
 		RoomClimate roomClimate = readRoomClimate(thermometer);
 		HeatingModel heatingModel = new HeatingModel();
 		heatingModel.setBoostActive(api.getAsBigDecimal(heating.accessKeyXmlApi(Datapoint.CONTROL_MODE))
-				.compareTo(HEATING_CONTROL_MODE_BOOST) == 0);
+				.compareTo(HomematicConstants.HEATING_CONTROL_MODE_BOOST) == 0);
 		heatingModel.setBoostMinutesLeft(
 				api.getAsBigDecimal(heating.accessKeyXmlApi(Datapoint.BOOST_STATE)).intValue());
 		heatingModel.setTargetTemperature(
