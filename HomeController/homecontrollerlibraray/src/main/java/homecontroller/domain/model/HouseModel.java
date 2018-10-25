@@ -26,7 +26,7 @@ public class HouseModel implements Serializable {
 
 	private SwitchModel kitchenWindowLightSwitch;
 
-	private int houseElectricalPowerConsumption;
+	private PowerMeterModel electricalPowerConsumption;
 
 	private List<String> lowBatteryDevices;
 
@@ -58,14 +58,6 @@ public class HouseModel implements Serializable {
 			throw new RuntimeException("Exception collecting RoomClimate's:", e);
 		}
 		return results;
-	}
-
-	public int getHouseElectricalPowerConsumption() {
-		return houseElectricalPowerConsumption;
-	}
-
-	public void setHouseElectricalPowerConsumption(int houseElectricalPowerConsumption) {
-		this.houseElectricalPowerConsumption = houseElectricalPowerConsumption;
 	}
 
 	public long getDateTime() {
@@ -150,6 +142,14 @@ public class HouseModel implements Serializable {
 
 	public void setConclusionClimateFacadeMax(OutdoorClimate conclusionClimateFacadeMax) {
 		this.conclusionClimateFacadeMax = conclusionClimateFacadeMax;
+	}
+
+	public PowerMeterModel getElectricalPowerConsumption() {
+		return electricalPowerConsumption;
+	}
+
+	public void setElectricalPowerConsumption(PowerMeterModel electricalPowerConsumption) {
+		this.electricalPowerConsumption = electricalPowerConsumption;
 	}
 
 }

@@ -13,7 +13,7 @@ public enum Device {
 	DIFFERENZTEMPERATUR_EINFAHRT_AUSSEN(Protocol.HM, "OEQ0801807", 2, "Thermometer", "Einfahrt"), //
 	DIFFERENZTEMPERATUR_EINFAHRT_DIFF(Protocol.HM, "OEQ0801807", 3, "Sonnensensor", "Einfahrt"), //
 	SCHALTER_KUECHE_LICHT(Protocol.HM, "OEQ0712456", 1, "Schalter Fensterlicht", "Küche"), //
-	STROMZAEHLER(Protocol.HM, "NEQ0861520", 1, "Stromzähler", "Haus"), //
+	STROMZAEHLER(Protocol.HM, "NEQ0861520", 1, "Stromverbrauch", "Haus"), //
 	;
 
 	private Protocol protocol;

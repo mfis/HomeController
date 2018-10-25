@@ -23,6 +23,7 @@ import homecontroller.domain.model.Hint;
 import homecontroller.domain.model.HouseModel;
 import homecontroller.domain.model.Intensity;
 import homecontroller.domain.model.OutdoorClimate;
+import homecontroller.domain.model.PowerMeterModel;
 import homecontroller.domain.model.RoomClimate;
 import homecontroller.domain.model.SwitchModel;
 import homecontroller.service.HomematicAPI;
@@ -102,7 +103,7 @@ public class HouseService {
 
 		newModel.setKitchenWindowLightSwitch(readSwitchState(Device.SCHALTER_KUECHE_LICHT));
 
-		newModel.setHouseElectricalPowerConsumption(readPowerConsumption(Device.STROMZAEHLER));
+		newModel.setElectricalPowerConsumption(readPowerConsumption(Device.STROMZAEHLER));
 
 		for (Device device : Device.values()) {
 			checkLowBattery(newModel, device);
@@ -249,8 +250,12 @@ public class HouseService {
 		return switchModel;
 	}
 
-	private int readPowerConsumption(Device device) {
-		return api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.POWER)).intValue();
+	private PowerMeterModel readPowerConsumption(Device device) {
+
+		PowerMeterModel model = new PowerMeterModel();
+		model.setDevice(device);
+		model.setActualConsumption(api.getAsBigDecimal(device.accessKeyXmlApi(Datapoint.POWER)).intValue());
+		return model;
 	}
 
 	private void checkLowBattery(HouseModel model, Device device) {
